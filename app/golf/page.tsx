@@ -202,9 +202,9 @@ export default function GolfPage() {
       className="w-full h-screen"
       style={{ maxHeight, height: maxHeight ?? "100vh" }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[360px_1fr] gap-0 h-full">
+      <div className="flex flex-col md:flex-row gap-0 h-full">
         {/* Sidebar */}
-        <aside className="bg-[var(--color-bg-cream)] text-[var(--color-ink-black)] border-r border-[var(--color-ui-line)] p-4 md:p-6 overflow-auto">
+        <aside className="bg-[var(--color-bg-cream)] text-[var(--color-ink-black)] border-r border-[var(--color-ui-line)] p-4 md:p-6 overflow-auto w-full md:w-1/4 md:max-w-[360px] md:min-w-[280px]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Golf Explorer</h2>
             <button
@@ -276,7 +276,7 @@ export default function GolfPage() {
         </aside>
 
         {/* Map */}
-        <section className="relative">
+        <section className="relative flex-1">
           {noToken ? (
             <div className="h-full w-full flex items-center justify-center text-sm text-[var(--color-ink-gray)] p-6">
               Mapbox token missing. Set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your environment to enable the map.
