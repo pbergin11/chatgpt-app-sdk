@@ -24,6 +24,15 @@ type CoursePoint = {
   distance?: number;
   lon?: number;
   lat?: number;
+  availability?: Array<{
+    date: string;
+    tee_times: Array<{
+      time: string;
+      available: boolean;
+      price: number;
+      players_available: number;
+    }>;
+  }>;
 };
 
 type GolfWidgetState = {
@@ -60,11 +69,22 @@ export default function GolfPage() {
   const geojson = useMemo(() => {
     const features = (toolOutput?.courses ?? [])
       .filter((c) => typeof c.lon === "number" && typeof c.lat === "number")
-      .map((c) => ({
-        type: "Feature" as const,
-        properties: { id: c.id, name: c.name },
-        geometry: { type: "Point" as const, coordinates: [c.lon!, c.lat!] as [number, number] },
-      }));
+      .map((c) => {
+        // Calculate if course has availability
+        const hasAvailability = c.availability?.some(day => 
+          day.tee_times.some(slot => slot.available)
+        ) ?? false;
+        
+        return {
+          type: "Feature" as const,
+          properties: { 
+            id: c.id, 
+            name: c.name,
+            hasAvailability,
+          },
+          geometry: { type: "Point" as const, coordinates: [c.lon!, c.lat!] as [number, number] },
+        };
+      });
     return { type: "FeatureCollection" as const, features };
   }, [toolOutput?.courses]);
 
@@ -172,16 +192,21 @@ export default function GolfPage() {
           },
           paint: { "text-color": "#F6F2E8" }, // cream
         });
-        // Unclustered points
+        // Unclustered points - color based on availability
         map.addLayer({
           id: "unclustered-point",
           type: "circle",
           source: "courses",
           filter: ["!has", "point_count"],
           paint: {
-            "circle-color": "#D54B3D", // primary red
-            "circle-radius": 6,
-            "circle-stroke-width": 1,
+            "circle-color": [
+              "case",
+              ["get", "hasAvailability"],
+              "#22c55e", // green for available
+              "#ef4444", // red for unavailable
+            ],
+            "circle-radius": 8,
+            "circle-stroke-width": 2,
             "circle-stroke-color": "#FFFFFF",
           },
         });
