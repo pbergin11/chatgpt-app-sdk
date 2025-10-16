@@ -220,8 +220,8 @@ const handler = createMcpHandler(async (server) => {
     async ({ location, radius = 50, filters = {} }, extra) => {
       const startTime = performance.now();
       log.basic("🔍 search_courses called");
-      log.full("  Input:", { location, radius, filters });
-      log.verbose("  Extra context:", extra);
+      log.basic("  Input:", { location, radius, filters });
+      log.basic("  Extra context:", extra);
 
       // Stubbed demo data (replace with real DB + geocoding later)
       // Coordinates roughly around San Diego by default; in real impl, geocode location
@@ -362,7 +362,7 @@ const handler = createMcpHandler(async (server) => {
       };
 
       const duration = (performance.now() - startTime).toFixed(2);
-      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  Response:", JSON.stringify(response, null, 2));
       log.basic("  ✅ Returning", courses.length, "courses", `(${duration}ms)`);
 
       return response;
@@ -383,8 +383,8 @@ const handler = createMcpHandler(async (server) => {
     async ({ courseId }, extra) => {
       const startTime = performance.now();
       log.basic("📋 get_course_details called");
-      log.full("  Input:", { courseId });
-      log.verbose("  Extra context:", extra);
+      log.basic("  Input:", { courseId });
+      log.basic("  Extra context:", extra);
 
       // Stubbed details; replace with DB lookup
       const details = {
@@ -407,7 +407,7 @@ const handler = createMcpHandler(async (server) => {
       };
 
       const duration = (performance.now() - startTime).toFixed(2);
-      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  Response:", JSON.stringify(response, null, 2));
       log.basic("  ✅ Returning details for", courseId, `(${duration}ms)`);
 
       return response;
@@ -431,8 +431,8 @@ const handler = createMcpHandler(async (server) => {
     async ({ courseId, date, time, players = 2 }, extra) => {
       const startTime = performance.now();
       log.basic("🎯 book_tee_time called");
-      log.full("  Input:", { courseId, date, time, players });
-      log.verbose("  Extra context:", extra);
+      log.basic("  Input:", { courseId, date, time, players });
+      log.basic("  Extra context:", extra);
 
       const bookingLink = `https://example.com/book/${encodeURIComponent(courseId)}?players=${players}${date ? `&date=${date}` : ""}${time ? `&time=${time}` : ""}`;
       
@@ -453,7 +453,7 @@ const handler = createMcpHandler(async (server) => {
       };
 
       const duration = (performance.now() - startTime).toFixed(2);
-      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  Response:", JSON.stringify(response, null, 2));
       log.basic("  ✅ Returning booking link", `(${duration}ms)`);
 
       return response;
