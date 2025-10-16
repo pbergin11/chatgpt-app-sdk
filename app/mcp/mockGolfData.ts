@@ -656,26 +656,45 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
 
 // Helper function to search courses by area
 export function searchCoursesByArea(
-  city: string,
+  city?: string,
   state?: string,
   country?: string,
   radius?: number,
   filters?: Record<string, any>
 ): GolfCourse[] {
   let results = MOCK_GOLF_COURSES.filter((course) => {
-    // Match city (case-insensitive)
-    const cityMatch = course.city.toLowerCase() === city.toLowerCase();
-    
-    // Match state or country
-    let locationMatch = cityMatch;
-    if (state && course.state) {
-      locationMatch = locationMatch && course.state.toLowerCase() === state.toLowerCase();
-    }
-    if (country && course.country) {
-      locationMatch = locationMatch && course.country.toLowerCase() === country.toLowerCase();
+    // If only state provided (USA)
+    if (!city && state && !country) {
+      return course.state?.toLowerCase() === state.toLowerCase();
     }
     
-    return locationMatch;
+    // If only country provided (international)
+    if (!city && !state && country) {
+      return course.country?.toLowerCase() === country.toLowerCase();
+    }
+    
+    // If city provided, do flexible matching
+    if (city) {
+      const cityLower = city.toLowerCase();
+      const courseCityLower = course.city.toLowerCase();
+      
+      // Exact match or partial match (e.g., "San Diego" matches "San Diego", "La Jolla" in San Diego area)
+      const cityMatch = courseCityLower.includes(cityLower) || cityLower.includes(courseCityLower);
+      
+      if (!cityMatch) return false;
+      
+      // If state/country also provided, must match
+      if (state && course.state) {
+        return course.state.toLowerCase() === state.toLowerCase();
+      }
+      if (country && course.country) {
+        return course.country.toLowerCase() === country.toLowerCase();
+      }
+      
+      return true;
+    }
+    
+    return false;
   });
 
   // Apply filters if provided
@@ -729,6 +748,16 @@ export function searchCoursesByArea(
   }
 
   return results;
+}
+
+// Helper to get a readable location description
+export function getLocationDescription(city?: string, state?: string, country?: string): string {
+  if (city && state) return `${city}, ${state}`;
+  if (city && country) return `${city}, ${country}`;
+  if (state) return state;
+  if (country) return country;
+  if (city) return city;
+  return "unknown location";
 }
 
 // Helper function to find a course by ID or name+location

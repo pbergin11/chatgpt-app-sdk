@@ -41,7 +41,7 @@
 import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { searchCoursesByArea, findCourse, type GolfCourse } from "./mockGolfData";
+import { searchCoursesByArea, findCourse, getLocationDescription, type GolfCourse } from "./mockGolfData";
 
 // Logging configuration
 const LOG_LEVEL = process.env.LOG_MCP || "none"; // none | basic | full | verbose
@@ -214,11 +214,11 @@ const handler = createMcpHandler(async (server) => {
     "search_courses_by_area",
     {
       title: "Search Golf Courses by Area",
-      description: "Search for golf courses in a specific city. For USA locations, provide city and state. For international locations, provide city and country. Supports extensive filtering by price, amenities, availability, and more.",
+      description: "Search for golf courses by location. You can search by: (1) State only (e.g., 'CA', 'AZ') for all courses in a US state, (2) Country only (e.g., 'United Kingdom', 'Australia') for international courses, or (3) City + State/Country for specific city results. Supports extensive filtering by price, amenities, availability, and more.",
       inputSchema: {
-        city: z.string().min(1).describe("City name (required)"),
-        state: z.string().optional().describe("State code for USA locations (e.g., 'CA', 'AZ', 'FL')"),
-        country: z.string().optional().describe("Country name for international locations (e.g., 'United Kingdom', 'Australia')"),
+        city: z.string().optional().describe("City name (optional - omit to search entire state/country)"),
+        state: z.string().optional().describe("State code for USA locations (e.g., 'CA', 'AZ', 'FL'). Can be used alone to get all courses in the state."),
+        country: z.string().optional().describe("Country name for international locations (e.g., 'United Kingdom', 'Australia'). Can be used alone to get all courses in the country."),
         radius: z.number().int().min(1).max(200).optional().describe("Search radius in miles (default 50, not yet implemented)"),
         filters: z.object({
           // Course type filter
@@ -259,7 +259,20 @@ const handler = createMcpHandler(async (server) => {
       log.basic("  Input:", { city, state, country, radius, filters });
       log.verbose("  Extra context:", extra);
 
-      // Validate that either state or country is provided (not both)
+      // Validate that at least one location parameter is provided
+      if (!city && !state && !country) {
+        return {
+          content: [
+            { 
+              type: "text" as const, 
+              text: "Please provide at least one location parameter: city, state, or country." 
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Validate that state and country are not both provided
       if (state && country) {
         return {
           content: [
@@ -276,9 +289,7 @@ const handler = createMcpHandler(async (server) => {
       const courses = searchCoursesByArea(city, state, country, radius, filters);
 
       // Format location string for response
-      let locationStr = city;
-      if (state) locationStr += `, ${state}`;
-      if (country) locationStr += `, ${country}`;
+      const locationStr = getLocationDescription(city, state, country);
 
       // Build summary text
       let summaryText = `Found ${courses.length} golf course(s) in ${locationStr}.`;
