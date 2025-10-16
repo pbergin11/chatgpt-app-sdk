@@ -199,93 +199,142 @@ export default function GolfPage() {
 
   return (
     <div
-      className="w-full h-screen"
+      className="relative w-full h-screen overflow-hidden"
       style={{ maxHeight, height: maxHeight ?? "100vh" }}
     >
-      <div className="flex flex-col md:flex-row gap-0 h-full">
-        {/* Sidebar */}
-        <aside className="bg-[var(--color-bg-cream)] text-[var(--color-ink-black)] border-r border-[var(--color-ui-line)] p-4 md:p-6 overflow-auto w-full md:w-1/4 md:max-w-[360px] md:min-w-[280px]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Golf Explorer</h2>
+      {/* Full-screen Map */}
+      <div className="absolute inset-0">
+        {noToken ? (
+          <div className="h-full w-full flex items-center justify-center text-sm text-[var(--color-ink-gray)] p-6 bg-[var(--color-bg-cream)]">
+            Mapbox token missing. Set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your environment to enable the map.
+          </div>
+        ) : (
+          <div ref={mapContainer} className="h-full w-full" />
+        )}
+      </div>
+
+      {/* Top Controls */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          className="bg-white rounded-full border border-[var(--color-ui-line)] px-4 py-2 text-sm font-medium shadow-lg hover:shadow-xl transition"
+          onClick={() => requestDisplayMode("fullscreen")}
+          aria-label="Enter fullscreen"
+        >
+          Fullscreen
+        </button>
+      </div>
+
+      {/* Bottom Course Cards */}
+      {toolOutput?.courses?.length ? (
+        <div className="absolute bottom-0 left-0 right-0 z-10 pb-4">
+          <div className="overflow-x-auto px-4 pb-2 scrollbar-hide">
+            <div className="flex gap-3 min-w-min">
+              {toolOutput.courses.map((c) => (
+                <button
+                  key={c.id}
+                  className={`flex-shrink-0 w-[280px] bg-white rounded-[20px] overflow-hidden shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
+                    state?.selectedCourseId === c.id ? "ring-2 ring-[var(--color-accent-teal)]" : ""
+                  }`}
+                  onClick={() => onSelectCourse(c.id)}
+                >
+                  {/* Course Image */}
+                  <div className="relative h-[140px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden">
+                    <img
+                      src={`https://picsum.photos/seed/${c.id}/280/140`}
+                      alt={c.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Distance Badge */}
+                    {typeof c.distance === "number" && (
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold">
+                        {c.distance} mi
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Course Info */}
+                  <div className="p-4 text-left">
+                    <h3 className="font-bold text-base text-[var(--color-ink-black)] mb-1 line-clamp-1">
+                      {c.name}
+                    </h3>
+                    <p className="text-xs text-[var(--color-ink-gray)] mb-3">
+                      {c.city}{c.state ? `, ${c.state}` : ""}
+                    </p>
+
+                    {/* Tags */}
+                    <div className="flex gap-2 mb-3">
+                      {c.type && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs font-medium capitalize">
+                          {c.type}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs font-medium">
+                        18 holes
+                      </span>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-2 text-sm font-medium hover:opacity-90 transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onBook();
+                      }}
+                    >
+                      Book Tee Time
+                    </button>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="bg-white rounded-[20px] px-6 py-4 shadow-lg text-center">
+            <p className="text-sm text-[var(--color-ink-gray)]">
+              No courses loaded. Try calling <code className="text-xs bg-[var(--color-bg-cream)] px-2 py-1 rounded">search_courses</code> from ChatGPT.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Course Detail Panel (Optional - appears when course selected) */}
+      {selectedCourse && toolOutput?.course?.id === selectedCourse.id && (
+        <div className="absolute top-20 left-4 right-4 md:left-auto md:right-4 md:w-[360px] z-20 bg-white rounded-[20px] shadow-2xl overflow-hidden">
+          <div className="relative h-[200px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)]">
+            <img
+              src={`https://picsum.photos/seed/${selectedCourse.id}/360/200`}
+              alt={selectedCourse.name}
+              className="w-full h-full object-cover"
+            />
             <button
-              className="rounded-full border px-3 py-1 text-sm"
-              onClick={() => requestDisplayMode("fullscreen")}
-              aria-label="Enter fullscreen"
+              className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center hover:bg-white transition"
+              onClick={() => setState((prev) => ({ ...(prev ?? { __v: 1, viewport: state!.viewport }), selectedCourseId: undefined }))}
+              aria-label="Close"
             >
-              Fullscreen
+              ✕
             </button>
           </div>
-
-          {!toolOutput?.courses?.length ? (
-            <div className="text-sm text-[var(--color-ink-gray)]">
-              No courses loaded. Try calling <code>search_courses</code> from ChatGPT.
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-[var(--color-ink-black)] mb-2">{selectedCourse.name}</h2>
+            <p className="text-sm text-[var(--color-ink-gray)] mb-4">
+              {selectedCourse.city}{selectedCourse.state ? `, ${selectedCourse.state}` : ""}
+            </p>
+            {toolOutput?.course?.description && (
+              <p className="text-sm text-[var(--color-ink-black)] mb-4">{toolOutput.course.description}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                className="flex-1 bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-3 text-sm font-medium hover:opacity-90 transition"
+                onClick={onBook}
+              >
+                Book Tee Time
+              </button>
             </div>
-          ) : (
-            <ul className="space-y-2">
-              {toolOutput.courses.map((c) => (
-                <li key={c.id}>
-                  <button
-                    className={`w-full text-left bg-white rounded-[12px] border border-[var(--color-ui-line)] p-3 hover:translate-y-[-1px] transition will-change-transform ${
-                      state?.selectedCourseId === c.id ? "ring-2 ring-[var(--color-accent-teal)]" : ""
-                    }`}
-                    onClick={() => onSelectCourse(c.id)}
-                  >
-                    <div className="text-sm font-semibold">{c.name}</div>
-                    <div className="text-xs text-[var(--color-ink-gray)]">
-                      {c.city ?? ""} {typeof c.distance === "number" ? `· ${c.distance} mi` : ""}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Details panel */}
-          {selectedCourse ? (
-            <div className="mt-4 bg-white rounded-[12px] border border-[var(--color-ui-line)] p-4 shadow-[var(--shadow-card)]">
-              <div className="text-base font-bold mb-1">{selectedCourse.name}</div>
-              <div className="text-xs text-[var(--color-ink-gray)] mb-3">
-                {selectedCourse.city ?? ""}
-              </div>
-              {toolOutput?.course?.id === selectedCourse.id && toolOutput?.course?.description ? (
-                <p className="text-sm mb-3">{toolOutput.course.description}</p>
-              ) : (
-                <p className="text-sm mb-3 text-[var(--color-ink-gray)]">Fetching details…</p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  className="inline-flex items-center justify-center rounded-[8px] px-4 py-2 text-sm font-medium text-[var(--color-bg-cream)]"
-                  style={{ background: "var(--color-primary-red)" }}
-                  onClick={onBook}
-                >
-                  Book tee time
-                </button>
-                <a
-                  className="inline-flex items-center justify-center rounded-[8px] px-3 py-2 text-sm border border-[var(--color-ui-line)]"
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    callTool?.("get_course_details", { courseId: selectedCourse.id });
-                  }}
-                >
-                  Refresh details
-                </a>
-              </div>
-            </div>
-          ) : null}
-        </aside>
-
-        {/* Map */}
-        <section className="relative flex-1">
-          {noToken ? (
-            <div className="h-full w-full flex items-center justify-center text-sm text-[var(--color-ink-gray)] p-6">
-              Mapbox token missing. Set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your environment to enable the map.
-            </div>
-          ) : (
-            <div ref={mapContainer} className="h-full w-full" />
-          )}
-        </section>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
