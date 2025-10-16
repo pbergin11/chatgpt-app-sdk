@@ -356,7 +356,7 @@ export default function GolfPage() {
             </div>
           </div>
         </div>
-      ) : isLoading ? (
+      ) : (
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
           <div className="bg-white rounded-[20px] px-6 py-4 shadow-lg text-center">
             <div className="flex items-center gap-3">
@@ -367,7 +367,7 @@ export default function GolfPage() {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* Selected Course Detail Panel (Optional - appears when course selected) */}
       {selectedCourse && toolOutput?.course?.id === selectedCourse.id && (

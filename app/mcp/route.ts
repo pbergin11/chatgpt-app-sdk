@@ -41,6 +41,7 @@
 import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
+import { searchCoursesByArea, findCourse, type GolfCourse } from "./mockGolfData";
 
 // Logging configuration
 const LOG_LEVEL = process.env.LOG_MCP || "none"; // none | basic | full | verbose
@@ -205,260 +206,344 @@ const handler = createMcpHandler(async (server) => {
     }
   );
 
-  // --- Golf.ai: Initial tools (stubs) ---
+  // --- Golf.ai: Robust tools with strict validation ---
   const golfToolMeta = { ...widgetMeta(golfWidget), "openai/widgetAccessible": true } as const;
 
-  // search_courses: returns a minimal list of demo courses based on location (with coordinates)
+  // search_courses_by_area: Search courses by city with state (USA) or country (international)
   server.registerTool(
-    "search_courses",
+    "search_courses_by_area",
     {
-      title: "Search Golf Courses",
-      description: "Search for golf courses by location with optional radius and filters.",
+      title: "Search Golf Courses by Area",
+      description: "Search for golf courses in a specific city. For USA locations, provide city and state. For international locations, provide city and country. Supports extensive filtering by price, amenities, availability, and more.",
       inputSchema: {
-        location: z.string().describe("City/region or place name to search around"),
-        radius: z.number().int().min(1).max(200).optional().describe("Search radius in miles (default 50)"),
-        filters: z.record(z.any()).optional().describe("Optional filters (public/private, amenities, etc.)"),
+        city: z.string().min(1).describe("City name (required)"),
+        state: z.string().optional().describe("State code for USA locations (e.g., 'CA', 'AZ', 'FL')"),
+        country: z.string().optional().describe("Country name for international locations (e.g., 'United Kingdom', 'Australia')"),
+        radius: z.number().int().min(1).max(200).optional().describe("Search radius in miles (default 50, not yet implemented)"),
+        filters: z.object({
+          // Course type filter
+          type: z.enum(["public", "private", "semi-private", "resort"]).optional().describe("Course type"),
+          
+          // Sorting options
+          sort_by: z.enum(["cheapest", "most_expensive", "most_available", "highest_rated"]).optional().describe("How to sort results"),
+          
+          // Price filters
+          max_price: z.number().optional().describe("Maximum average price in USD"),
+          min_price: z.number().optional().describe("Minimum average price in USD"),
+          
+          // Rating filter
+          min_rating: z.number().min(1).max(5).optional().describe("Minimum star rating (1-5)"),
+          
+          // Amenity filters (all boolean)
+          spa: z.boolean().optional().describe("Must have spa facilities"),
+          putting_green: z.boolean().optional().describe("Must have putting green"),
+          driving_range: z.boolean().optional().describe("Must have driving range"),
+          club_rentals: z.boolean().optional().describe("Must offer club rentals"),
+          restaurant: z.boolean().optional().describe("Must have restaurant"),
+          golf_lessons: z.boolean().optional().describe("Must offer golf lessons"),
+          lodging: z.boolean().optional().describe("Must have lodging/hotel"),
+        }).optional().describe("Optional filters for refining search results"),
       },
-      _meta: golfToolMeta,
+      annotations: {
+        readOnlyHint: true,
+      },
+      _meta: {
+        ...golfToolMeta,
+        "openai/toolInvocation/invoking": "Searching courses…",
+        "openai/toolInvocation/invoked": "Courses found",
+      },
     },
-    async ({ location, radius = 50, filters = {} }, extra) => {
+    async ({ city, state, country, radius = 50, filters = {} }, extra) => {
       const startTime = performance.now();
-      log.basic("🔍 search_courses called");
-      log.basic("  Input:", { location, radius, filters });
-      log.basic("  Extra context:", extra);
+      log.basic("🔍 search_courses_by_area called");
+      log.basic("  Input:", { city, state, country, radius, filters });
+      log.verbose("  Extra context:", extra);
 
-      // Stubbed demo data (replace with real DB + geocoding later)
-      // Coordinates roughly around San Diego by default; in real impl, geocode location
-      const base = { lon: -117.1611, lat: 32.7157 };
-      const jitter = (n: number) => n + (Math.random() - 0.5) * 0.2;
-      const courses = [
-        {
-          id: "demo-1",
-          name: "Torrey Pines Golf Course",
-          city: "La Jolla",
-          state: "CA",
-          type: "public",
-          distance: 5,
-          lon: -117.2517,
-          lat: 32.8987,
-        },
-        {
-          id: "demo-2",
-          name: "Balboa Park Golf Course",
-          city: "San Diego",
-          state: "CA",
-          type: "public",
-          distance: 3,
-          lon: -117.1461,
-          lat: 32.7338,
-        },
-        {
-          id: "demo-3",
-          name: "Coronado Golf Course",
-          city: "Coronado",
-          state: "CA",
-          type: "public",
-          distance: 7,
-          lon: -117.1783,
-          lat: 32.6859,
-        },
-        {
-          id: "demo-4",
-          name: "Mission Bay Golf Course",
-          city: "San Diego",
-          state: "CA",
-          type: "public",
-          distance: 4,
-          lon: -117.2264,
-          lat: 32.7809,
-        },
-        {
-          id: "demo-5",
-          name: "Riverwalk Golf Club",
-          city: "San Diego",
-          state: "CA",
-          type: "semi-private",
-          distance: 8,
-          lon: -117.1264,
-          lat: 32.8409,
-        },
-        {
-          id: "demo-6",
-          name: "Carlton Oaks Golf Course",
-          city: "Santee",
-          state: "CA",
-          type: "public",
-          distance: 15,
-          lon: -116.9739,
-          lat: 32.8584,
-        },
-        {
-          id: "demo-7",
-          name: "Steele Canyon Golf Club",
-          city: "Jamul",
-          state: "CA",
-          type: "semi-private",
-          distance: 18,
-          lon: -116.8764,
-          lat: 32.7209,
-        },
-        {
-          id: "demo-8",
-          name: "The Crossings at Carlsbad",
-          city: "Carlsbad",
-          state: "CA",
-          type: "public",
-          distance: 25,
-          lon: -117.3103,
-          lat: 33.1581,
-        },
-        {
-          id: "demo-9",
-          name: "Aviara Golf Club",
-          city: "Carlsbad",
-          state: "CA",
-          type: "private",
-          distance: 28,
-          lon: -117.2839,
-          lat: 33.1092,
-        },
-        {
-          id: "demo-10",
-          name: "Maderas Golf Club",
-          city: "Poway",
-          state: "CA",
-          type: "semi-private",
-          distance: 20,
-          lon: -117.0364,
-          lat: 32.9628,
-        },
-        {
-          id: "demo-11",
-          name: "Salt Creek Golf Club",
-          city: "Chula Vista",
-          state: "CA",
-          type: "public",
-          distance: 12,
-          lon: -117.0842,
-          lat: 32.6401,
-        },
-        {
-          id: "demo-12",
-          name: "Eastlake Country Club",
-          city: "Chula Vista",
-          state: "CA",
-          type: "private",
-          distance: 14,
-          lon: -117.0164,
-          lat: 32.6209,
-        },
-      ];
+      // Validate that either state or country is provided (not both)
+      if (state && country) {
+        return {
+          content: [
+            { 
+              type: "text" as const, 
+              text: "Please provide either 'state' (for USA) or 'country' (for international), not both." 
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Search courses using mock data
+      const courses = searchCoursesByArea(city, state, country, radius, filters);
+
+      // Format location string for response
+      let locationStr = city;
+      if (state) locationStr += `, ${state}`;
+      if (country) locationStr += `, ${country}`;
+
+      // Build summary text
+      let summaryText = `Found ${courses.length} golf course(s) in ${locationStr}.`;
+      if (filters?.sort_by) {
+        const sortLabels: Record<string, string> = {
+          cheapest: "sorted by lowest price",
+          most_expensive: "sorted by highest price",
+          most_available: "sorted by availability",
+          highest_rated: "sorted by rating",
+        };
+        summaryText += ` Results ${sortLabels[filters.sort_by]}.`;
+      }
 
       const response = {
         content: [
-          { type: "text" as const, text: `Found ${courses.length} course(s) near ${location}.` },
+          { type: "text" as const, text: summaryText },
         ],
         structuredContent: {
-          courses,
-          searchContext: { location, radius, filters, timestamp: new Date().toISOString() },
-        },
-        _meta: golfToolMeta,
-      };
-
-      const duration = (performance.now() - startTime).toFixed(2);
-      log.basic("  Response:", JSON.stringify(response, null, 2));
-      log.basic("  ✅ Returning", courses.length, "courses", `(${duration}ms)`);
-
-      return response;
-    }
-  );
-
-  // get_course_details: returns basic details for a course id (stub)
-  server.registerTool(
-    "get_course_details",
-    {
-      title: "Get Course Details",
-      description: "Return detailed information for a specific golf course.",
-      inputSchema: {
-        courseId: z.string().describe("Unique course identifier"),
-      },
-      _meta: golfToolMeta,
-    },
-    async ({ courseId }, extra) => {
-      const startTime = performance.now();
-      log.basic("📋 get_course_details called");
-      log.basic("  Input:", { courseId });
-      log.basic("  Extra context:", extra);
-
-      // Stubbed details; replace with DB lookup
-      const details = {
-        id: courseId,
-        name: `Course ${courseId}`,
-        description: "A beautiful demo course with ocean views.",
-        holes: 18,
-        type: "public",
-        amenities: ["spa", "restaurant", "pro shop"],
-        phone: "+1 (555) 010-0101",
-        website: "https://example.com/courses/" + courseId,
-      };
-
-      const response = {
-        content: [
-          { type: "text" as const, text: `Details for course ${courseId}.` },
-        ],
-        structuredContent: { course: details },
-        _meta: golfToolMeta,
-      };
-
-      const duration = (performance.now() - startTime).toFixed(2);
-      log.basic("  Response:", JSON.stringify(response, null, 2));
-      log.basic("  ✅ Returning details for", courseId, `(${duration}ms)`);
-
-      return response;
-    }
-  );
-
-  // book_tee_time: validates inputs and returns a booking link (stub)
-  server.registerTool(
-    "book_tee_time",
-    {
-      title: "Book Tee Time",
-      description: "Initiate a tee time booking for a public course (stub).",
-      inputSchema: {
-        courseId: z.string().describe("Unique course identifier"),
-        date: z.string().optional().describe("Preferred date (YYYY-MM-DD)"),
-        time: z.string().optional().describe("Preferred time (HH:mm)"),
-        players: z.number().int().min(1).max(8).optional().describe("Number of players"),
-      },
-      _meta: golfToolMeta,
-    },
-    async ({ courseId, date, time, players = 2 }, extra) => {
-      const startTime = performance.now();
-      log.basic("🎯 book_tee_time called");
-      log.basic("  Input:", { courseId, date, time, players });
-      log.basic("  Extra context:", extra);
-
-      const bookingLink = `https://example.com/book/${encodeURIComponent(courseId)}?players=${players}${date ? `&date=${date}` : ""}${time ? `&time=${time}` : ""}`;
-      
-      const response = {
-        content: [
-          { type: "text" as const, text: `Booking link ready for ${courseId}.` },
-        ],
-        structuredContent: {
-          booking: {
-            courseId,
-            date: date ?? null,
-            time: time ?? null,
-            players,
-            bookingLink,
+          courses: courses.map(course => ({
+            id: course.id,
+            name: course.name,
+            city: course.city,
+            state: course.state,
+            country: course.country,
+            type: course.type,
+            lon: course.lon,
+            lat: course.lat,
+            average_price: course.average_price,
+            rating_stars: course.rating_stars,
+            holes: course.holes,
+            par: course.par,
+            amenities: course.amenities,
+          })),
+          searchContext: { 
+            city, 
+            state, 
+            country, 
+            radius, 
+            filters, 
+            timestamp: new Date().toISOString(),
+            total_results: courses.length,
           },
         },
         _meta: golfToolMeta,
       };
 
       const duration = (performance.now() - startTime).toFixed(2);
-      log.basic("  Response:", JSON.stringify(response, null, 2));
-      log.basic("  ✅ Returning booking link", `(${duration}ms)`);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Returning", courses.length, "courses in", locationStr, `(${duration}ms)`);
+
+      return response;
+    }
+  );
+
+  // get_course_details: Get full details for a specific course by ID or name+location
+  server.registerTool(
+    "get_course_details",
+    {
+      title: "Get Golf Course Details",
+      description: "Get comprehensive information about a specific golf course. You can search by course ID, or by course name with state (USA) or country (international). Returns all details including amenities, pricing, availability, contact info, and more. Use this for ANY question about a specific course.",
+      inputSchema: {
+        courseId: z.string().optional().describe("Unique course identifier (e.g., 'torrey-pines-south')"),
+        name: z.string().optional().describe("Course name (partial match supported)"),
+        state: z.string().optional().describe("State code for USA courses (e.g., 'CA', 'AZ')"),
+        country: z.string().optional().describe("Country name for international courses"),
+      },
+      annotations: {
+        readOnlyHint: true,
+      },
+      _meta: {
+        ...golfToolMeta,
+        "openai/toolInvocation/invoking": "Loading course details…",
+        "openai/toolInvocation/invoked": "Course details ready",
+      },
+    },
+    async ({ courseId, name, state, country }, extra) => {
+      const startTime = performance.now();
+      log.basic("📋 get_course_details called");
+      log.basic("  Input:", { courseId, name, state, country });
+      log.verbose("  Extra context:", extra);
+
+      // Validate input: must provide either courseId or name
+      if (!courseId && !name) {
+        return {
+          content: [
+            { 
+              type: "text" as const, 
+              text: "Please provide either 'courseId' or 'name' to look up a course." 
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Find the course
+      const course = findCourse(courseId, name, state, country);
+
+      if (!course) {
+        const searchTerm = courseId || name;
+        return {
+          content: [
+            { 
+              type: "text" as const, 
+              text: `Could not find a course matching "${searchTerm}". Please check the course ID or name and try again.` 
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Calculate total available tee times
+      const totalAvailableSlots = course.availability.reduce((sum, day) => 
+        sum + day.tee_times.filter(t => t.available).length, 0
+      );
+
+      // Build detailed text response
+      const amenitiesList = Object.entries(course.amenities)
+        .filter(([_, hasIt]) => hasIt)
+        .map(([amenity, _]) => amenity.replace(/_/g, ' '))
+        .join(', ');
+
+      const detailsText = `${course.name} is a ${course.type} ${course.holes}-hole course in ${course.city}${course.state ? ', ' + course.state : ''}${course.country ? ', ' + course.country : ''}. ` +
+        `Par ${course.par}, ${course.yardage} yards. Designed by ${course.designer} in ${course.year_built}. ` +
+        `Average price: $${course.average_price}. Rating: ${course.rating_stars} stars (${course.reviews_count} reviews). ` +
+        `${totalAvailableSlots} tee times available in the next 7 days.`;
+
+      const response = {
+        content: [
+          { type: "text" as const, text: detailsText },
+        ],
+        structuredContent: { 
+          course: {
+            ...course,
+            total_available_slots: totalAvailableSlots,
+          },
+        },
+        _meta: golfToolMeta,
+      };
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Returning details for", course.name, `(${duration}ms)`);
+
+      return response;
+    }
+  );
+
+  // book_tee_time: Initiate booking for a tee time
+  server.registerTool(
+    "book_tee_time",
+    {
+      title: "Book Tee Time",
+      description: "Initiate a tee time booking for a golf course. Validates availability and generates booking information.",
+      inputSchema: {
+        courseId: z.string().describe("Unique course identifier"),
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Preferred date in YYYY-MM-DD format"),
+        time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe("Preferred time in HH:mm format (24-hour)"),
+        players: z.number().int().min(1).max(4).optional().describe("Number of players (1-4, default 2)"),
+      },
+      _meta: {
+        ...golfToolMeta,
+        "openai/toolInvocation/invoking": "Checking availability…",
+        "openai/toolInvocation/invoked": "Booking ready",
+      },
+    },
+    async ({ courseId, date, time, players = 2 }, extra) => {
+      const startTime = performance.now();
+      log.basic("🎯 book_tee_time called");
+      log.basic("  Input:", { courseId, date, time, players });
+      log.verbose("  Extra context:", extra);
+
+      // Find the course
+      const course = findCourse(courseId);
+      if (!course) {
+        return {
+          content: [
+            { 
+              type: "text" as const, 
+              text: `Could not find course with ID "${courseId}".` 
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Check availability if date and time provided
+      let availabilityInfo = null;
+      let estimatedPrice = course.average_price;
+
+      if (date && time) {
+        const dayAvailability = course.availability.find(d => d.date === date);
+        if (dayAvailability) {
+          const teeTime = dayAvailability.tee_times.find(t => t.time === time);
+          if (teeTime) {
+            if (!teeTime.available) {
+              return {
+                content: [
+                  { 
+                    type: "text" as const, 
+                    text: `The requested time slot (${time} on ${date}) is not available at ${course.name}. Please choose a different time.` 
+                  },
+                ],
+                structuredContent: {
+                  error: "time_slot_unavailable",
+                  course: course.name,
+                  requested_date: date,
+                  requested_time: time,
+                },
+                isError: true,
+              };
+            }
+            if (teeTime.players_available < players) {
+              return {
+                content: [
+                  { 
+                    type: "text" as const, 
+                    text: `Only ${teeTime.players_available} player spot(s) available at ${time} on ${date}. You requested ${players} players.` 
+                  },
+                ],
+                isError: true,
+              };
+            }
+            availabilityInfo = {
+              confirmed_available: true,
+              price_per_player: teeTime.price,
+              total_price: teeTime.price * players,
+            };
+            estimatedPrice = teeTime.price;
+          }
+        }
+      }
+
+      // Generate booking link
+      const bookingLink = `${course.website}/book?courseId=${encodeURIComponent(courseId)}&players=${players}${date ? `&date=${date}` : ""}${time ? `&time=${time}` : ""}`;
+      
+      const responseText = availabilityInfo 
+        ? `Tee time available at ${course.name} for ${players} player(s) on ${date} at ${time}. Total: $${availabilityInfo.total_price}.`
+        : `Booking initiated for ${course.name}. ${players} player(s).${date ? ` Date: ${date}.` : ""}${time ? ` Time: ${time}.` : ""}`;
+
+      const response = {
+        content: [
+          { type: "text" as const, text: responseText },
+        ],
+        structuredContent: {
+          booking: {
+            courseId,
+            courseName: course.name,
+            date: date ?? null,
+            time: time ?? null,
+            players,
+            bookingLink,
+            availability: availabilityInfo,
+            contact: {
+              phone: course.phone,
+              email: course.email,
+              website: course.website,
+            },
+          },
+        },
+        _meta: golfToolMeta,
+      };
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Booking ready for", course.name, `(${duration}ms)`);
 
       return response;
     }
