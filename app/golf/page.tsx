@@ -76,8 +76,8 @@ export default function GolfPage() {
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: state?.viewport.center ?? [-117.1611, 32.7157],
-      zoom: state?.viewport.zoom ?? 10,
+      center: state?.viewport?.center ?? [-117.1611, 32.7157],
+      zoom: state?.viewport?.zoom ?? 10,
     });
     mapRef.current = map;
 
@@ -156,7 +156,7 @@ export default function GolfPage() {
           const feat = map.queryRenderedFeatures(e.point, { layers: ["unclustered-point"] })[0];
           const id = feat?.properties?.id as string | undefined;
           if (id) {
-            setState((prev) => ({ ...(prev ?? { __v: 1, viewport: state!.viewport }), selectedCourseId: id }));
+            setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
           }
         });
 
@@ -171,7 +171,7 @@ export default function GolfPage() {
       map.remove();
       mapRef.current = null;
     };
-  }, [geojson, setState, state?.viewport, token]);
+  }, [geojson, setState, token]);
 
   // Update source data when courses change
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function GolfPage() {
   }, [state?.selectedCourseId, toolOutput?.courses]);
 
   const onSelectCourse = (id: string) => {
-    setState((prev) => ({ ...(prev ?? { __v: 1, viewport: state!.viewport }), selectedCourseId: id }));
+    setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
     // Fetch details via MCP
     callTool && callTool("get_course_details", { courseId: id });
   };
@@ -240,7 +240,7 @@ export default function GolfPage() {
                   {/* Course Image */}
                   <div className="relative h-[140px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden">
                     <img
-                      src={`https://picsum.photos/seed/${c.id}/280/140`}
+                      src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
                       alt={c.name}
                       className="w-full h-full object-cover"
                     />
@@ -310,7 +310,7 @@ export default function GolfPage() {
             />
             <button
               className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center hover:bg-white transition"
-              onClick={() => setState((prev) => ({ ...(prev ?? { __v: 1, viewport: state!.viewport }), selectedCourseId: undefined }))}
+              onClick={() => setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: undefined }))}
               aria-label="Close"
             >
               ✕

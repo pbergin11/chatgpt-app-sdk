@@ -163,10 +163,12 @@ const handler = createMcpHandler(async (server) => {
                 "https://chatgpt-app-sdk.vercel.app",
                 "https://api.mapbox.com",
                 "https://events.mapbox.com",
+                "https://i.postimg.cc",
               ],
               resource_domains: [
                 "https://chatgpt-app-sdk.vercel.app",
                 "https://api.mapbox.com",
+                "https://i.postimg.cc",
               ],
             },
           },
