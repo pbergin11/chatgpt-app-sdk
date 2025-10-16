@@ -65,27 +65,26 @@ export default function GolfPage() {
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  const geojson = useMemo(() => {
-    const features = (toolOutput?.courses ?? [])
+  // Calculate availability for each course
+  const coursesWithAvailability = useMemo(() => {
+    return (toolOutput?.courses ?? [])
       .filter((c) => typeof c.lon === "number" && typeof c.lat === "number")
       .map((c) => {
-        // Calculate if course has availability
-        const hasAvailability = c.availability?.some(day => 
-          day.tee_times.some(slot => slot.available)
-        ) ?? false;
+        // Calculate total available slots
+        const totalAvailable = c.availability?.reduce((sum, day) => 
+          sum + day.tee_times.filter(slot => slot.available).length, 0
+        ) ?? 0;
+        
+        const hasAvailability = totalAvailable > 0;
         
         return {
-          type: "Feature" as const,
-          properties: { 
-            id: c.id, 
-            name: c.name,
-            hasAvailability,
-          },
-          geometry: { type: "Point" as const, coordinates: [c.lon!, c.lat!] as [number, number] },
+          ...c,
+          totalAvailable,
+          hasAvailability,
         };
       });
-    return { type: "FeatureCollection" as const, features };
   }, [toolOutput?.courses]);
 
   // Track when courses are loaded
@@ -158,100 +157,97 @@ export default function GolfPage() {
     });
 
     map.on("load", () => {
-      // Add clustered source
-      if (!map.getSource("courses")) {
-        map.addSource("courses", {
-          type: "geojson",
-          data: geojson as any,
-          cluster: true,
-          clusterMaxZoom: 14,
-          clusterRadius: 50,
-        });
-
-        // Cluster circles
-        map.addLayer({
-          id: "clusters",
-          type: "circle",
-          source: "courses",
-          filter: ["has", "point_count"],
-          paint: {
-            "circle-color": "#007F7B", // accent teal
-            "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 30, 26],
-          },
-        });
-        // Cluster count
-        map.addLayer({
-          id: "cluster-count",
-          type: "symbol",
-          source: "courses",
-          filter: ["has", "point_count"],
-          layout: {
-            "text-field": ["get", "point_count_abbreviated"],
-            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
-            "text-size": 12,
-          },
-          paint: { "text-color": "#F6F2E8" }, // cream
-        });
-        // Unclustered points - color based on availability
-        map.addLayer({
-          id: "unclustered-point",
-          type: "circle",
-          source: "courses",
-          filter: ["!has", "point_count"],
-          paint: {
-            "circle-color": [
-              "case",
-              ["get", "hasAvailability"],
-              "#22c55e", // green for available
-              "#ef4444", // red for unavailable
-            ],
-            "circle-radius": 8,
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#FFFFFF",
-          },
-        });
-
-        // Zoom in on cluster
-        map.on("click", "clusters", (e) => {
-          const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-          const clusterId = features[0].properties?.cluster_id;
-          const source = map.getSource("courses") as mapboxgl.GeoJSONSource;
-          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err || zoom === null || zoom === undefined) return;
-            const [lng, lat] = (features[0].geometry as any).coordinates;
-            map.easeTo({ center: [lng, lat], zoom });
-          });
-        });
-
-        // Select a course on point click
-        map.on("click", "unclustered-point", (e) => {
-          const feat = map.queryRenderedFeatures(e.point, { layers: ["unclustered-point"] })[0];
-          const id = feat?.properties?.id as string | undefined;
-          if (id) {
-            setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
-          }
-        });
-
-        map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-        map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-        map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-        map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
-      }
+      // Map is ready, markers will be added via separate effect
     });
 
     return () => {
       map.remove();
       mapRef.current = null;
     };
-  }, [geojson, setState, token]);
+  }, [setState, token]);
 
-  // Update source data when courses change
+  // Add custom markers when courses change
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const src = map.getSource("courses") as mapboxgl.GeoJSONSource | undefined;
-    if (src) src.setData(geojson as any);
-  }, [geojson]);
+    if (!map || !map.isStyleLoaded()) return;
+
+    // Remove existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    coursesWithAvailability.forEach((course) => {
+      // Create custom marker element
+      const el = document.createElement('div');
+      el.className = 'custom-marker';
+      
+      // Determine color based on availability
+      const color = course.hasAvailability ? '#22c55e' : '#ef4444';
+      
+      // Check if this is a highly available course (top 30% of available slots)
+      const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
+      const isHighlyAvailable = course.totalAvailable > maxAvailable * 0.7;
+      
+      // Create marker HTML with teardrop shape
+      el.innerHTML = `
+        <div style="
+          position: relative;
+          width: 30px;
+          height: 30px;
+          background-color: ${color};
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          cursor: pointer;
+          transition: transform 0.2s;
+        ">
+          ${isHighlyAvailable ? `
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(45deg);
+              color: white;
+              font-size: 14px;
+              font-weight: bold;
+            ">★</div>
+          ` : ''}
+        </div>
+      `;
+      
+      // Add hover effect
+      el.addEventListener('mouseenter', () => {
+        const markerDiv = el.querySelector('div') as HTMLElement;
+        if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1.2)';
+      });
+      el.addEventListener('mouseleave', () => {
+        const markerDiv = el.querySelector('div') as HTMLElement;
+        if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1)';
+      });
+      
+      // Create marker
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([course.lon!, course.lat!])
+        .addTo(map);
+      
+      // Add click handler
+      el.addEventListener('click', () => {
+        setState((prev) => ({ 
+          ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), 
+          selectedCourseId: course.id 
+        }));
+      });
+      
+      markersRef.current.push(marker);
+    });
+
+    // Cleanup function
+    return () => {
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+    };
+  }, [coursesWithAvailability, setState]);
 
   const selectedCourse = useMemo(() => {
     const id = state?.selectedCourseId;
