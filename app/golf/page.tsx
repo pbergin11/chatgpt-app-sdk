@@ -10,6 +10,7 @@ import {
   useMaxHeight,
   useRequestDisplayMode,
   useCallTool,
+  useUserAgent,
 } from "../hooks";
 import BlocksWaveIcon from "./BlocksWaveIcon";
 
@@ -46,6 +47,7 @@ export default function GolfPage() {
   const maxHeight = useMaxHeight() ?? undefined;
   const requestDisplayMode = useRequestDisplayMode();
   const callTool = useCallTool();
+  const userAgent = useUserAgent();
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [noToken, setNoToken] = useState(false);
@@ -73,6 +75,40 @@ export default function GolfPage() {
       setIsLoading(false);
     }
   }, [toolOutput?.courses]);
+
+  // Determine card size based on device and display mode
+  const cardWidth = useMemo(() => {
+    const deviceType = userAgent?.device?.type ?? "desktop";
+    const mode = displayMode ?? "inline";
+    
+    // Mobile devices get smaller cards
+    if (deviceType === "mobile") {
+      return mode === "fullscreen" ? 200 : 160;
+    }
+    
+    // Tablet gets medium cards
+    if (deviceType === "tablet") {
+      return mode === "fullscreen" ? 240 : 200;
+    }
+    
+    // Desktop gets full-size cards
+    return 280;
+  }, [userAgent, displayMode]);
+
+  const cardImageHeight = useMemo(() => {
+    const deviceType = userAgent?.device?.type ?? "desktop";
+    const mode = displayMode ?? "inline";
+    
+    if (deviceType === "mobile") {
+      return mode === "fullscreen" ? 100 : 80;
+    }
+    
+    if (deviceType === "tablet") {
+      return mode === "fullscreen" ? 120 : 100;
+    }
+    
+    return 140;
+  }, [userAgent, displayMode]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -243,13 +279,17 @@ export default function GolfPage() {
               {toolOutput.courses.map((c) => (
                 <button
                   key={c.id}
-                  className={`flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
+                  className={`flex-shrink-0 bg-white rounded-[20px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
                     state?.selectedCourseId === c.id ? "ring-2 ring-[var(--color-accent-teal)]" : ""
                   }`}
+                  style={{ width: `${cardWidth}px` }}
                   onClick={() => onSelectCourse(c.id)}
                 >
                   {/* Course Image */}
-                  <div className="relative h-[140px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[20px]">
+                  <div 
+                    className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[20px]"
+                    style={{ height: `${cardImageHeight}px` }}
+                  >
                     <img
                       src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
                       alt={c.name}
@@ -264,29 +304,45 @@ export default function GolfPage() {
                   </div>
 
                   {/* Course Info */}
-                  <div className="p-4 text-left">
-                    <h3 className="font-bold text-base text-[var(--color-ink-black)] mb-1 line-clamp-1">
+                  <div className="p-3 text-left" style={{ padding: cardWidth < 200 ? '12px' : '16px' }}>
+                    <h3 
+                      className="font-bold text-[var(--color-ink-black)] mb-1 line-clamp-1"
+                      style={{ fontSize: cardWidth < 200 ? '14px' : '16px' }}
+                    >
                       {c.name}
                     </h3>
-                    <p className="text-xs text-[var(--color-ink-gray)] mb-3">
+                    <p 
+                      className="text-[var(--color-ink-gray)] mb-2"
+                      style={{ fontSize: cardWidth < 200 ? '11px' : '12px' }}
+                    >
                       {c.city}{c.state ? `, ${c.state}` : ""}
                     </p>
 
                     {/* Tags */}
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex gap-1.5 mb-2" style={{ marginBottom: cardWidth < 200 ? '8px' : '12px' }}>
                       {c.type && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs text-black font-medium capitalize">
+                        <span 
+                          className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize"
+                          style={{ fontSize: cardWidth < 200 ? '10px' : '12px' }}
+                        >
                           {c.type}
                         </span>
                       )}
-                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs text-black font-medium">
+                      <span 
+                        className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium"
+                        style={{ fontSize: cardWidth < 200 ? '10px' : '12px' }}
+                      >
                         18 holes
                       </span>
                     </div>
 
                     {/* Action Button */}
                     <button
-                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-2 text-sm font-medium hover:opacity-70 transition cursor-pointer"
+                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] font-medium hover:opacity-70 transition cursor-pointer"
+                      style={{ 
+                        padding: cardWidth < 200 ? '6px 12px' : '8px 16px',
+                        fontSize: cardWidth < 200 ? '12px' : '14px'
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onBook();

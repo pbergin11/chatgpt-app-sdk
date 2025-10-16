@@ -12,6 +12,7 @@ export { useOpenAIGlobal } from "./use-openai-global";
 
 // Additional hooks
 export { useMaxHeight } from "./use-max-height";
+export { useUserAgent } from "./use-user-agent";
 
 // Types
 export type * from "./types";
