@@ -123,11 +123,13 @@ const handler = createMcpHandler(async (server) => {
   );
 
   // --- Golf widget resource ---
+  // Add cache-busting version parameter to force ChatGPT to reload
+  const WIDGET_VERSION = "v2"; // Increment this when you update the UI
   const golfHtml = await getAppsSdkCompatibleHtml(baseURL, "/golf");
   const golfWidget: ContentWidget = {
     id: "golf_ui",
     title: "Golf.ai Explorer",
-    templateUri: "ui://widget/golf.html",
+    templateUri: `ui://widget/golf.html?v=${WIDGET_VERSION}`,
     invoking: "Loading golf…",
     invoked: "Golf ready",
     html: golfHtml,

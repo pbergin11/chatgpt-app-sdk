@@ -246,7 +246,7 @@ export default function GolfPage() {
                     />
                     {/* Distance Badge */}
                     {typeof c.distance === "number" && (
-                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold">
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-black font-semibold">
                         {c.distance} mi
                       </div>
                     )}
@@ -264,18 +264,18 @@ export default function GolfPage() {
                     {/* Tags */}
                     <div className="flex gap-2 mb-3">
                       {c.type && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs font-medium capitalize">
+                        <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs text-black font-medium capitalize">
                           {c.type}
                         </span>
                       )}
-                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs font-medium">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-xs text-black font-medium">
                         18 holes
                       </span>
                     </div>
 
                     {/* Action Button */}
                     <button
-                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-2 text-sm font-medium hover:opacity-90 transition"
+                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-2 text-sm font-medium hover:opacity-70 transition cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         onBook();
@@ -304,7 +304,7 @@ export default function GolfPage() {
         <div className="absolute top-20 left-4 right-4 md:left-auto md:right-4 md:w-[360px] z-20 bg-white rounded-[20px] shadow-2xl overflow-hidden">
           <div className="relative h-[200px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)]">
             <img
-              src={`https://picsum.photos/seed/${selectedCourse.id}/360/200`}
+              src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
               alt={selectedCourse.name}
               className="w-full h-full object-cover"
             />
