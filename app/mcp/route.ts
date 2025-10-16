@@ -105,10 +105,12 @@ const handler = createMcpHandler(async (server) => {
             "openai/widgetDomain": golfWidget.widgetDomain,
             "openai/widgetCSP": {
               connect_domains: [
+                "https://chatgpt-app-sdk.vercel.app",
                 "https://api.mapbox.com",
                 "https://events.mapbox.com",
               ],
               resource_domains: [
+                "https://chatgpt-app-sdk.vercel.app",
                 "https://api.mapbox.com",
               ],
             },
