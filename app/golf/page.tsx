@@ -216,7 +216,7 @@ export default function GolfPage() {
       {/* Top Controls */}
       <div className="absolute top-4 right-4 z-10">
         <button
-          className="bg-white rounded-full border border-[var(--color-ui-line)] px-4 py-2 text-sm font-medium shadow-lg hover:shadow-xl transition"
+          className="bg-white rounded-full border border-[var(--color-ui-line)] px-4 py-2 text-sm text-black font-medium shadow-lg hover:shadow-xl transition"
           onClick={() => requestDisplayMode("fullscreen")}
           aria-label="Enter fullscreen"
         >

@@ -92,7 +92,7 @@ const handler = createMcpHandler(async (server) => {
     invoked: "Content loaded",
     html: html,
     description: "Displays the homepage content",
-    widgetDomain: "https://nextjs.org/docs",
+    widgetDomain: "https://chatgpt-app-sdk.vercel.app",
   };
   server.registerResource(
     "content-widget",
@@ -132,7 +132,7 @@ const handler = createMcpHandler(async (server) => {
     invoked: "Golf ready",
     html: golfHtml,
     description: "Explore golf courses on a map with details and booking.",
-    widgetDomain: "https://chatgpt.com",
+    widgetDomain: "https://chatgpt-app-sdk.vercel.app",
   };
   server.registerResource(
     "golf-widget",
