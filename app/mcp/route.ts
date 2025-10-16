@@ -322,6 +322,7 @@ const handler = createMcpHandler(async (server) => {
             holes: course.holes,
             par: course.par,
             amenities: course.amenities,
+            availability: course.availability, // Include availability data for markers
           })),
           searchContext: { 
             city, 
