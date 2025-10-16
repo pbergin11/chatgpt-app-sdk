@@ -1,6 +1,59 @@
+/**
+ * MCP Route - Golf.ai ChatGPT App
+ * 
+ * This file handles all MCP (Model Context Protocol) communication between ChatGPT and our server.
+ * 
+ * === DEBUGGING MCP COMMUNICATION ===
+ * 
+ * To log MCP requests/responses, set the LOG_MCP environment variable:
+ *   - LOG_MCP=basic    → Log tool calls and basic info
+ *   - LOG_MCP=full     → Log complete request/response payloads
+ *   - LOG_MCP=verbose  → Log everything including metadata
+ * 
+ * Example in .env.local:
+ *   LOG_MCP=full
+ * 
+ * Logs appear in:
+ *   - Local dev: Terminal where `pnpm dev` is running
+ *   - Vercel: Runtime logs in Vercel dashboard (Logs tab)
+ * 
+ * === MCP FLOW ===
+ * 
+ * 1. ChatGPT sends initialize request → Server responds with capabilities
+ * 2. ChatGPT calls tools/list → Server returns available tools
+ * 3. ChatGPT calls resources/list → Server returns widget templates
+ * 4. User asks question → ChatGPT calls tool (e.g., search_courses)
+ * 5. Server returns:
+ *    - content: Text for ChatGPT to read
+ *    - structuredContent: Data for the widget component
+ *    - _meta: Metadata (widget template URI, CSP, etc.)
+ * 6. ChatGPT renders widget iframe with structuredContent
+ * 
+ * === KEY CONCEPTS ===
+ * 
+ * - Tools: Functions ChatGPT can call (search_courses, get_course_details, etc.)
+ * - Resources: Widget HTML templates (ui://widget/golf.html)
+ * - structuredContent: Data visible to both ChatGPT and the widget
+ * - _meta: Data only visible to the widget (not the model)
+ * - CSP: Content Security Policy - whitelist domains for scripts/API calls
+ */
+
 import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
+
+// Logging configuration
+const LOG_LEVEL = process.env.LOG_MCP || "none"; // none | basic | full | verbose
+const shouldLog = (level: string) => {
+  const levels = ["none", "basic", "full", "verbose"];
+  return levels.indexOf(LOG_LEVEL) >= levels.indexOf(level);
+};
+
+const log = {
+  basic: (...args: any[]) => shouldLog("basic") && console.log("[MCP]", ...args),
+  full: (...args: any[]) => shouldLog("full") && console.log("[MCP]", ...args),
+  verbose: (...args: any[]) => shouldLog("verbose") && console.log("[MCP]", ...args),
+};
 
 const getAppsSdkCompatibleHtml = async (baseUrl: string, path: string) => {
   const result = await fetch(`${baseUrl}${path}`);
@@ -164,7 +217,12 @@ const handler = createMcpHandler(async (server) => {
       },
       _meta: golfToolMeta,
     },
-    async ({ location, radius = 50, filters = {} }) => {
+    async ({ location, radius = 50, filters = {} }, extra) => {
+      const startTime = performance.now();
+      log.basic("🔍 search_courses called");
+      log.full("  Input:", { location, radius, filters });
+      log.verbose("  Extra context:", extra);
+
       // Stubbed demo data (replace with real DB + geocoding later)
       // Coordinates roughly around San Diego by default; in real impl, geocode location
       const base = { lon: -117.1611, lat: 32.7157 };
@@ -192,9 +250,9 @@ const handler = createMcpHandler(async (server) => {
         },
       ];
 
-      return {
+      const response = {
         content: [
-          { type: "text", text: `Found ${courses.length} course(s) near ${location}.` },
+          { type: "text" as const, text: `Found ${courses.length} course(s) near ${location}.` },
         ],
         structuredContent: {
           courses,
@@ -202,6 +260,12 @@ const handler = createMcpHandler(async (server) => {
         },
         _meta: golfToolMeta,
       };
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Returning", courses.length, "courses", `(${duration}ms)`);
+
+      return response;
     }
   );
 
@@ -216,7 +280,12 @@ const handler = createMcpHandler(async (server) => {
       },
       _meta: golfToolMeta,
     },
-    async ({ courseId }) => {
+    async ({ courseId }, extra) => {
+      const startTime = performance.now();
+      log.basic("📋 get_course_details called");
+      log.full("  Input:", { courseId });
+      log.verbose("  Extra context:", extra);
+
       // Stubbed details; replace with DB lookup
       const details = {
         id: courseId,
@@ -229,13 +298,19 @@ const handler = createMcpHandler(async (server) => {
         website: "https://example.com/courses/" + courseId,
       };
 
-      return {
+      const response = {
         content: [
-          { type: "text", text: `Details for course ${courseId}.` },
+          { type: "text" as const, text: `Details for course ${courseId}.` },
         ],
         structuredContent: { course: details },
         _meta: golfToolMeta,
       };
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Returning details for", courseId, `(${duration}ms)`);
+
+      return response;
     }
   );
 
@@ -253,11 +328,17 @@ const handler = createMcpHandler(async (server) => {
       },
       _meta: golfToolMeta,
     },
-    async ({ courseId, date, time, players = 2 }) => {
+    async ({ courseId, date, time, players = 2 }, extra) => {
+      const startTime = performance.now();
+      log.basic("🎯 book_tee_time called");
+      log.full("  Input:", { courseId, date, time, players });
+      log.verbose("  Extra context:", extra);
+
       const bookingLink = `https://example.com/book/${encodeURIComponent(courseId)}?players=${players}${date ? `&date=${date}` : ""}${time ? `&time=${time}` : ""}`;
-      return {
+      
+      const response = {
         content: [
-          { type: "text", text: `Booking link ready for ${courseId}.` },
+          { type: "text" as const, text: `Booking link ready for ${courseId}.` },
         ],
         structuredContent: {
           booking: {
@@ -270,6 +351,12 @@ const handler = createMcpHandler(async (server) => {
         },
         _meta: golfToolMeta,
       };
+
+      const duration = (performance.now() - startTime).toFixed(2);
+      log.full("  Response:", JSON.stringify(response, null, 2));
+      log.basic("  ✅ Returning booking link", `(${duration}ms)`);
+
+      return response;
     }
   );
   // --- End Golf.ai stubs ---
