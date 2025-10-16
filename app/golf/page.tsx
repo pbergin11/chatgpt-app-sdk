@@ -145,7 +145,7 @@ export default function GolfPage() {
           const clusterId = features[0].properties?.cluster_id;
           const source = map.getSource("courses") as mapboxgl.GeoJSONSource;
           source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return;
+            if (err || zoom === null || zoom === undefined) return;
             const [lng, lat] = (features[0].geometry as any).coordinates;
             map.easeTo({ center: [lng, lat], zoom });
           });
