@@ -11,6 +11,7 @@ import {
   useRequestDisplayMode,
   useCallTool,
 } from "../hooks";
+import BlocksWaveIcon from "./BlocksWaveIcon";
 
 // Types for tool outputs we expect
 type CoursePoint = {
@@ -48,6 +49,8 @@ export default function GolfPage() {
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [noToken, setNoToken] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -61,6 +64,14 @@ export default function GolfPage() {
         geometry: { type: "Point" as const, coordinates: [c.lon!, c.lat!] as [number, number] },
       }));
     return { type: "FeatureCollection" as const, features };
+  }, [toolOutput?.courses]);
+
+  // Track when courses are loaded
+  useEffect(() => {
+    if (toolOutput?.courses && toolOutput.courses.length > 0) {
+      setHasLoadedOnce(true);
+      setIsLoading(false);
+    }
   }, [toolOutput?.courses]);
 
   useEffect(() => {
@@ -227,18 +238,18 @@ export default function GolfPage() {
       {/* Bottom Course Cards */}
       {toolOutput?.courses?.length ? (
         <div className="absolute bottom-0 left-0 right-0 z-10 pb-4">
-          <div className="overflow-x-auto px-4 pb-2 scrollbar-hide">
-            <div className="flex gap-3 min-w-min">
+          <div className="overflow-x-auto overflow-y-visible px-4 pb-2 scrollbar-hide">
+            <div className="flex gap-3 min-w-min py-2">
               {toolOutput.courses.map((c) => (
                 <button
                   key={c.id}
-                  className={`flex-shrink-0 w-[280px] bg-white rounded-[20px] overflow-hidden shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
+                  className={`flex-shrink-0 w-[280px] bg-white rounded-[20px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
                     state?.selectedCourseId === c.id ? "ring-2 ring-[var(--color-accent-teal)]" : ""
                   }`}
                   onClick={() => onSelectCourse(c.id)}
                 >
                   {/* Course Image */}
-                  <div className="relative h-[140px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden">
+                  <div className="relative h-[140px] bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[20px]">
                     <img
                       src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
                       alt={c.name}
@@ -289,15 +300,18 @@ export default function GolfPage() {
             </div>
           </div>
         </div>
-      ) : (
+      ) : isLoading ? (
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
           <div className="bg-white rounded-[20px] px-6 py-4 shadow-lg text-center">
-            <p className="text-sm text-[var(--color-ink-gray)]">
-              No courses loaded. Try calling <code className="text-xs bg-[var(--color-bg-cream)] px-2 py-1 rounded">search_courses</code> from ChatGPT.
-            </p>
+            <div className="flex items-center gap-3">
+              <BlocksWaveIcon size={32} color="var(--color-accent-teal)" />
+              <p className="text-sm text-[var(--color-ink-gray)] font-medium">
+                Gathering Courses...
+              </p>
+            </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Selected Course Detail Panel (Optional - appears when course selected) */}
       {selectedCourse && toolOutput?.course?.id === selectedCourse.id && (
