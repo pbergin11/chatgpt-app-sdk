@@ -73,7 +73,7 @@ const handler = createMcpHandler(async (server) => {
   const golfHtml = await getAppsSdkCompatibleHtml(baseURL, "/golf");
   const golfWidget: ContentWidget = {
     id: "golf_ui",
-    title: "Golf Explorer",
+    title: "Golf.ai Explorer",
     templateUri: "ui://widget/golf.html",
     invoking: "Loading golf…",
     invoked: "Golf ready",
