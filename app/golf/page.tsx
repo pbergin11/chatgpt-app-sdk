@@ -300,13 +300,13 @@ export default function GolfPage() {
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-stretch w-[280px] pointer-events-none">
         {/* Debug Widget */}
         <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg pointer-events-auto">
-          {/* Fullscreen Button at Top */}
+          {/* Display Mode Toggle Button at Top */}
           <button
             className="w-full bg-[var(--color-primary-red)] text-white rounded-t-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition"
-            onClick={() => requestDisplayMode("fullscreen")}
-            aria-label="Enter fullscreen"
+            onClick={() => requestDisplayMode(displayMode === "fullscreen" ? "inline" : "fullscreen")}
+            aria-label={displayMode === "fullscreen" ? "Exit fullscreen" : "Enter fullscreen"}
           >
-            Fullscreen
+            {displayMode === "fullscreen" ? "Inline" : "Fullscreen"}
           </button>
           
           {/* Debug Info */}
@@ -370,11 +370,12 @@ export default function GolfPage() {
         <div 
           className="absolute bottom-0 left-0 right-0 z-10"
           style={{ 
-            paddingBottom: `${(safeArea?.insets?.bottom ?? 0) + 16}px` 
+            paddingBottom: `${(safeArea?.insets?.bottom ?? 0) + 12}px` 
           }}
         >
           <div className="overflow-x-auto overflow-y-visible px-4 pb-2 scrollbar-hide">
-            <div className="flex gap-3 min-w-min py-2">
+            <div className="flex items-end gap-3 min-w-min py-2">
+
               {toolOutput.courses.map((c) => {
                 const isSelected = state?.selectedCourseId === c.id;
                 return (
