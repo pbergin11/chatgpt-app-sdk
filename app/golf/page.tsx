@@ -39,6 +39,8 @@ type CoursePoint = {
       players_available: number;
     }>;
   }>;
+  matched_date?: string;
+  available_on_date?: boolean;
 };
 
 type GolfWidgetState = {
@@ -51,6 +53,7 @@ export default function GolfPage() {
   const toolOutput = useWidgetProps<{
     courses?: CoursePoint[];
     course?: { id: string; name: string; description?: string };
+    searchContext?: { matched_date?: string | null };
   }>();
 
   const [state, setState] = useWidgetState<GolfWidgetState>(() => ({
@@ -84,23 +87,23 @@ export default function GolfPage() {
 
   // Calculate availability for each course
   const coursesWithAvailability = useMemo(() => {
+    const matchedDate = toolOutput?.searchContext?.matched_date ?? undefined;
     return (toolOutput?.courses ?? [])
       .filter((c) => typeof c.lon === "number" && typeof c.lat === "number")
       .map((c) => {
-        // Calculate total available slots
-        const totalAvailable = c.availability?.reduce((sum, day) => 
+        const totalAvailable = c.availability?.reduce((sum, day) =>
           sum + day.tee_times.filter(slot => slot.available).length, 0
         ) ?? 0;
-        
-        const hasAvailability = totalAvailable > 0;
-        
+        const hasAvailability = matchedDate
+          ? (c.available_on_date ?? false)
+          : totalAvailable > 0;
         return {
           ...c,
           totalAvailable,
           hasAvailability,
         };
       });
-  }, [toolOutput?.courses]);
+  }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date]);
 
   // Track when courses are loaded
   useEffect(() => {
@@ -196,8 +199,11 @@ export default function GolfPage() {
       const el = document.createElement('div');
       el.className = 'custom-marker';
       
-      // Determine color based on availability
-      const color = course.hasAvailability ? '#22c55e' : '#ef4444';
+      // Determine color based on availability (grey if matching a specific date with no availability)
+      const matchedDate = toolOutput?.searchContext?.matched_date;
+      const color = matchedDate
+        ? (course.hasAvailability ? '#22c55e' : '#9CA3AF')
+        : (course.hasAvailability ? '#22c55e' : '#ef4444');
       
       // Check if this is a highly available course (top 30% of available slots)
       const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
@@ -266,8 +272,8 @@ export default function GolfPage() {
 
   const selectedCourse = useMemo(() => {
     const id = state?.selectedCourseId;
-    return (toolOutput?.courses ?? []).find((c) => c.id === id) ?? null;
-  }, [state?.selectedCourseId, toolOutput?.courses]);
+    return (coursesWithAvailability ?? []).find((c) => c.id === id) ?? null;
+  }, [state?.selectedCourseId, coursesWithAvailability]);
 
   const onSelectCourse = (id: string) => {
     setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
@@ -366,7 +372,7 @@ export default function GolfPage() {
       </div>
 
       {/* Bottom Course Cards */}
-      {toolOutput?.courses?.length ? (
+      {coursesWithAvailability?.length ? (
         <div 
           className="absolute bottom-0 left-0 right-0 z-10"
           style={{ 
@@ -375,9 +381,9 @@ export default function GolfPage() {
         >
           <div className="overflow-x-auto overflow-y-visible px-4 pb-2 scrollbar-hide">
             <div className="flex items-end gap-3 min-w-min py-2">
-
-              {toolOutput.courses.map((c) => {
+              {coursesWithAvailability.map((c) => {
                 const isSelected = state?.selectedCourseId === c.id;
+                const dimForNoAvail = (toolOutput?.searchContext?.matched_date && !c.hasAvailability);
                 return (
                   <button
                     key={c.id}
@@ -385,7 +391,7 @@ export default function GolfPage() {
                       isSelected 
                         ? "ring-2 ring-[var(--color-accent-teal)]" 
                         : "hover:translate-y-[-2px]"
-                    }`}
+                    } ${dimForNoAvail ? "opacity-60" : ""}`}
                     style={{ 
                       width: isSelected ? '320px' : '280px',
                       transformOrigin: 'bottom center'

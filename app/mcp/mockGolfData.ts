@@ -49,6 +49,13 @@ export interface GolfCourse {
   slope: number; // Slope rating
   designer: string;
   year_built: number;
+  local_rules?: string;
+  practice?: {
+    range_available: boolean;
+    stalls?: number;
+    surface?: "grass" | "mats" | "both";
+    hours?: Record<string, string>;
+  };
   
   // Amenities (for filtering)
   amenities: {
@@ -113,7 +120,7 @@ function generateTeeTimes(date: string, basePrice: number, availabilityLevel: "h
       } else {
         available = Math.random() > 0.1; // 90% available
       }
-      
+
       times.push({
         time: timeStr,
         available,
@@ -652,6 +659,319 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
     rating_stars: 4.9,
     reviews_count: 543,
   },
+  // Denver, CO courses
+  {
+    id: "city-park-denver",
+    name: "City Park Golf Course",
+    city: "Denver",
+    state: "CO",
+    country: "USA",
+    address: "3181 E 23rd Ave",
+    zipCode: "80205",
+    lon: -104.9560,
+    lat: 39.7507,
+    type: "public",
+    holes: 18,
+    par: 70,
+    yardage: 6630,
+    rating: 70.5,
+    slope: 122,
+    designer: "City of Denver / redesign",
+    year_built: 1913,
+    local_rules: "Repair ball marks and divots; keep pace with group ahead.",
+    practice: { range_available: true, stalls: 30, surface: "both", hours: { mon: "07:00-20:00", tue: "07:00-20:00", wed: "07:00-20:00", thu: "07:00-20:00", fri: "07:00-20:00", sat: "06:30-20:00", sun: "06:30-20:00" } },
+    amenities: {
+      spa: false,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: true,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: true,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: false,
+      event_space: true,
+      lodging: false,
+    },
+    pricing_tiers: [
+      { name: "weekday", base_price: 58, description: "Monday-Thursday" },
+      { name: "weekend", base_price: 75, description: "Friday-Sunday" },
+      { name: "twilight", base_price: 40, description: "After 3 PM" },
+    ],
+    average_price: 58,
+    availability: generateAvailability(58, "high"),
+    phone: "+1 (720) 865-3410",
+    email: "info@denvergolf.org",
+    website: "https://www.denvergov.org/golf/city-park",
+    description: "Renovated municipal course with downtown Denver skyline views.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/city-park-denver.jpg",
+    rating_stars: 4.3,
+    reviews_count: 1240,
+  },
+  {
+    id: "willis-case-denver",
+    name: "Willis Case Golf Course",
+    city: "Denver",
+    state: "CO",
+    country: "USA",
+    address: "4999 Vrain St",
+    zipCode: "80212",
+    lon: -105.0466,
+    lat: 39.7878,
+    type: "public",
+    holes: 18,
+    par: 71,
+    yardage: 6450,
+    rating: 70.1,
+    slope: 127,
+    designer: "City of Denver",
+    year_built: 1928,
+    local_rules: "Winter rules as posted; cart path only when wet.",
+    practice: { range_available: true, stalls: 20, surface: "grass" },
+    amenities: {
+      spa: false,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: true,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: false,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: false,
+      event_space: true,
+      lodging: false,
+    },
+    pricing_tiers: [
+      { name: "weekday", base_price: 52, description: "Monday-Thursday" },
+      { name: "weekend", base_price: 68, description: "Friday-Sunday" },
+      { name: "twilight", base_price: 38, description: "After 3 PM" },
+    ],
+    average_price: 52,
+    availability: generateAvailability(52, "medium"),
+    phone: "+1 (720) 913-0705",
+    email: "info@denvergolf.org",
+    website: "https://www.denvergov.org/golf/willis-case",
+    description: "Tree-lined fairways in northwest Denver with mountain vistas.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/willis-case.jpg",
+    rating_stars: 4.1,
+    reviews_count: 860,
+  },
+  // Las Vegas, NV courses
+  {
+    id: "bali-hai-las-vegas",
+    name: "Bali Hai Golf Club",
+    city: "Las Vegas",
+    state: "NV",
+    country: "USA",
+    address: "5160 Las Vegas Blvd S",
+    zipCode: "89119",
+    lon: -115.1710,
+    lat: 36.0840,
+    type: "resort",
+    holes: 18,
+    par: 71,
+    yardage: 7002,
+    rating: 73.0,
+    slope: 130,
+    designer: "Lee Schmidt, Brian Curley",
+    year_built: 2000,
+    local_rules: "Desert areas play as lateral hazards unless marked otherwise.",
+    practice: { range_available: true, stalls: 40, surface: "mats" },
+    amenities: {
+      spa: true,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: true,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: true,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: true,
+      event_space: true,
+      lodging: false,
+    },
+    pricing_tiers: [
+      { name: "weekday", base_price: 199, description: "Monday-Thursday" },
+      { name: "weekend", base_price: 249, description: "Friday-Sunday" },
+      { name: "twilight", base_price: 130, description: "After 2 PM" },
+    ],
+    average_price: 199,
+    availability: generateAvailability(199, "medium"),
+    phone: "+1 (888) 427-6678",
+    email: "info@balihai-golfclub.com",
+    website: "https://www.balihai-golfclub.com",
+    description: "Tropical-themed championship course on the Las Vegas Strip.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/bali-hai.jpg",
+    rating_stars: 4.4,
+    reviews_count: 2100,
+  },
+  {
+    id: "las-vegas-muni",
+    name: "Las Vegas Golf Club",
+    city: "Las Vegas",
+    state: "NV",
+    country: "USA",
+    address: "4300 W Washington Ave",
+    zipCode: "89107",
+    lon: -115.1996,
+    lat: 36.1805,
+    type: "public",
+    holes: 18,
+    par: 72,
+    yardage: 6319,
+    rating: 69.8,
+    slope: 115,
+    designer: "William P. Bell",
+    year_built: 1938,
+    local_rules: "City rules apply; please repair ball marks and fill divots.",
+    practice: { range_available: true, stalls: 25, surface: "mats" },
+    amenities: {
+      spa: false,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: true,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: true,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: false,
+      event_space: true,
+      lodging: false,
+    },
+    pricing_tiers: [
+      { name: "weekday", base_price: 39, description: "Monday-Thursday" },
+      { name: "weekend", base_price: 49, description: "Friday-Sunday" },
+      { name: "twilight", base_price: 29, description: "After 3 PM" },
+    ],
+    average_price: 39,
+    availability: generateAvailability(39, "high"),
+    phone: "+1 (702) 646-3003",
+    email: "info@lasvegasgolfclub.com",
+    website: "https://www.lasvegasgolfclub.com",
+    description: "Historic muni with walkable layout and affordable rates.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/lv-muni.jpg",
+    rating_stars: 4.0,
+    reviews_count: 980,
+  },
+  // Michigan courses
+  {
+    id: "oakland-hills-south",
+    name: "Oakland Hills Country Club - South",
+    city: "Bloomfield Hills",
+    state: "MI",
+    country: "USA",
+    address: "3951 W Maple Rd",
+    zipCode: "48301",
+    lon: -83.2807,
+    lat: 42.5459,
+    type: "private",
+    holes: 18,
+    par: 72,
+    yardage: 7444,
+    rating: 76.6,
+    slope: 146,
+    designer: "Donald Ross",
+    year_built: 1918,
+    local_rules: "Members and guests only; adhere to posted pace of play.",
+    practice: { range_available: true, stalls: 40, surface: "grass" },
+    amenities: {
+      spa: true,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: false,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: true,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: true,
+      event_space: true,
+      lodging: false,
+    },
+    pricing_tiers: [
+      { name: "member_guest", base_price: 350, description: "Members only" },
+    ],
+    average_price: 350,
+    availability: generateAvailability(350, "low"),
+    phone: "+1 (248) 644-2500",
+    email: "info@oaklandhillscc.com",
+    website: "https://www.oaklandhillscc.com",
+    description: "Major championship venue known as the Monster.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/oakland-hills.jpg",
+    rating_stars: 5.0,
+    reviews_count: 2100,
+  },
+  {
+    id: "sweetgrass-mi",
+    name: "Island Resort & Casino - Sweetgrass",
+    city: "Harris",
+    state: "MI",
+    country: "USA",
+    address: "W 399 US-2",
+    zipCode: "49845",
+    lon: -87.3070,
+    lat: 45.7006,
+    type: "resort",
+    holes: 18,
+    par: 72,
+    yardage: 7305,
+    rating: 74.6,
+    slope: 138,
+    designer: "Paul Albanese",
+    year_built: 2008,
+    local_rules: "Cart path only when posted; protect native areas.",
+    practice: { range_available: true, stalls: 25, surface: "grass" },
+    amenities: {
+      spa: true,
+      putting_green: true,
+      driving_range: true,
+      club_rentals: true,
+      cart_rentals: true,
+      restaurant: true,
+      bar: true,
+      pro_shop: true,
+      locker_rooms: true,
+      practice_bunker: true,
+      chipping_green: true,
+      golf_lessons: true,
+      club_fitting: true,
+      event_space: true,
+      lodging: true,
+    },
+    pricing_tiers: [
+      { name: "weekday", base_price: 110, description: "Monday-Thursday" },
+      { name: "weekend", base_price: 145, description: "Friday-Sunday" },
+      { name: "twilight", base_price: 85, description: "After 2 PM" },
+    ],
+    average_price: 110,
+    availability: generateAvailability(110, "medium"),
+    phone: "+1 (906) 723-2255",
+    email: "golf@islandresortandcasino.com",
+    website: "https://www.islandresortgolf.com",
+    description: "Award-winning resort course with fescue-lined fairways and rolling terrain.",
+    image_url: "https://i.postimg.cc/9FLqXqYZ/sweetgrass.jpg",
+    rating_stars: 4.8,
+    reviews_count: 980,
+  },
 ];
 
 // Helper function to search courses by area
@@ -702,6 +1022,7 @@ export function searchCoursesByArea(
     results = results.filter((course) => {
       // Filter by type
       if (filters.type && course.type !== filters.type) return false;
+      if (filters.types && Array.isArray(filters.types) && filters.types.length > 0 && !filters.types.includes(course.type)) return false;
       
       // Filter by amenities
       if (filters.spa && !course.amenities.spa) return false;
@@ -711,6 +1032,20 @@ export function searchCoursesByArea(
       if (filters.restaurant && !course.amenities.restaurant) return false;
       if (filters.golf_lessons && !course.amenities.golf_lessons) return false;
       if (filters.lodging && !course.amenities.lodging) return false;
+      if (filters.has_range && !(course.practice?.range_available || course.amenities.driving_range)) return false;
+      if (filters.private_only && course.type !== "private") return false;
+      if (filters.pro_shop && !course.amenities.pro_shop) return false;
+      if (filters.bar && !course.amenities.bar) return false;
+      if (filters.locker_rooms && !course.amenities.locker_rooms) return false;
+      if (filters.event_space && !course.amenities.event_space) return false;
+      if (filters.practice_bunker && !course.amenities.practice_bunker) return false;
+      if (filters.chipping_green && !course.amenities.chipping_green) return false;
+      if (filters.practice_range_surface) {
+        const surf = course.practice?.surface;
+        const req = filters.practice_range_surface;
+        if (!surf) return false;
+        if (!(surf === req || surf === "both")) return false;
+      }
       
       // Filter by price range
       if (filters.max_price && course.average_price > filters.max_price) return false;
@@ -718,6 +1053,68 @@ export function searchCoursesByArea(
       
       // Filter by rating
       if (filters.min_rating && course.rating_stars < filters.min_rating) return false;
+      if (filters.course_rating_min && course.rating < filters.course_rating_min) return false;
+      if (filters.course_rating_max && course.rating > filters.course_rating_max) return false;
+      if (filters.min_reviews && course.reviews_count < filters.min_reviews) return false;
+
+      // Free text and local rules contains
+      if (filters.search_text) {
+        const q = String(filters.search_text).toLowerCase();
+        const hay = [course.name, course.description, course.city, course.designer]
+          .filter(Boolean)
+          .map((s) => String(s).toLowerCase())
+          .join(" ");
+        if (!hay.includes(q)) return false;
+      }
+      if (filters.local_rules_contains) {
+        const q = String(filters.local_rules_contains).toLowerCase();
+        if (!course.local_rules || !course.local_rules.toLowerCase().includes(q)) return false;
+      }
+
+      // Course attributes
+      if (filters.holes_in && Array.isArray(filters.holes_in) && filters.holes_in.length > 0 && !filters.holes_in.includes(course.holes)) return false;
+      if (filters.par_min && course.par < filters.par_min) return false;
+      if (filters.par_max && course.par > filters.par_max) return false;
+      if (filters.yardage_min && course.yardage < filters.yardage_min) return false;
+      if (filters.yardage_max && course.yardage > filters.yardage_max) return false;
+      if (filters.slope_min && course.slope < filters.slope_min) return false;
+      if (filters.slope_max && course.slope > filters.slope_max) return false;
+      if (filters.designer && !course.designer.toLowerCase().includes(String(filters.designer).toLowerCase())) return false;
+      if (filters.year_built_min && course.year_built < filters.year_built_min) return false;
+      if (filters.year_built_max && course.year_built > filters.year_built_max) return false;
+
+      // Filter by specific date availability
+      if (filters.date) {
+        const toMinutes = (hhmm: string) => {
+          const [h, m] = hhmm.split(":").map((n: string) => parseInt(n, 10));
+          return h * 60 + m;
+        };
+        const day = course.availability.find((d) => d.date === filters.date);
+        const applyWindow = (time: string) => {
+          if (!filters.start_time && !filters.end_time && !filters.time_window) return true;
+          let start = 0;
+          let end = 24 * 60 - 1;
+          if (filters.time_window) {
+            switch (filters.time_window) {
+              case "morning": start = toMinutes("06:00"); end = toMinutes("10:59"); break;
+              case "midday": start = toMinutes("11:00"); end = toMinutes("13:59"); break;
+              case "afternoon": start = toMinutes("14:00"); end = toMinutes("15:59"); break;
+              case "twilight": start = toMinutes("16:00"); end = toMinutes("18:59"); break;
+            }
+          }
+          if (filters.start_time) start = Math.max(start, toMinutes(filters.start_time));
+          if (filters.end_time) end = Math.min(end, toMinutes(filters.end_time));
+          const t = toMinutes(time);
+          return t >= start && t <= end;
+        };
+        const slots = (day?.tee_times ?? []).filter((t) => t.available && applyWindow(t.time));
+        const slotsWithPlayers = typeof filters.players_min === "number" ? slots.filter(s => s.players_available >= filters.players_min) : slots;
+        const slotsWithPriceMin = typeof filters.price_on_date_min === "number" ? slotsWithPlayers.filter(s => s.price >= filters.price_on_date_min) : slotsWithPlayers;
+        const slotsWithPrice = typeof filters.price_on_date_max === "number" ? slotsWithPriceMin.filter(s => s.price <= filters.price_on_date_max) : slotsWithPriceMin;
+        const availableSlots = slotsWithPrice.length;
+        if (!filters.include_unavailable && availableSlots <= 0) return false;
+        if ((typeof filters.price_on_date_min === "number" || typeof filters.price_on_date_max === "number" || typeof filters.players_min === "number" || filters.start_time || filters.end_time || filters.time_window) && availableSlots <= 0) return false;
+      }
       
       return true;
     });
@@ -725,6 +1122,11 @@ export function searchCoursesByArea(
 
   // Sort results
   if (filters?.sort_by) {
+    const toMinutes = (hhmm: string) => {
+      const [h, m] = hhmm.split(":").map((n: string) => parseInt(n, 10));
+      return h * 60 + m;
+    };
+    const matchedDate: string | undefined = filters?.date;
     switch (filters.sort_by) {
       case "cheapest":
         results.sort((a, b) => a.average_price - b.average_price);
@@ -743,6 +1145,65 @@ export function searchCoursesByArea(
         break;
       case "highest_rated":
         results.sort((a, b) => b.rating_stars - a.rating_stars);
+        break;
+      case "cheapest_on_date": {
+        if (matchedDate) {
+          results.sort((a, b) => {
+            const aDay = a.availability.find(d => d.date === matchedDate);
+            const bDay = b.availability.find(d => d.date === matchedDate);
+            const aMin = aDay ? Math.min(...aDay.tee_times.filter(t => t.available).map(t => t.price).concat([Infinity])) : Infinity;
+            const bMin = bDay ? Math.min(...bDay.tee_times.filter(t => t.available).map(t => t.price).concat([Infinity])) : Infinity;
+            return aMin - bMin;
+          });
+        }
+        break;
+      }
+      case "earliest_available": {
+        if (matchedDate) {
+          results.sort((a, b) => {
+            const aDay = a.availability.find(d => d.date === matchedDate);
+            const bDay = b.availability.find(d => d.date === matchedDate);
+            const aTimes = aDay ? aDay.tee_times.filter(t => t.available).map(t => toMinutes(t.time)) : [];
+            const bTimes = bDay ? bDay.tee_times.filter(t => t.available).map(t => toMinutes(t.time)) : [];
+            const aMin = aTimes.length ? Math.min(...aTimes) : Infinity;
+            const bMin = bTimes.length ? Math.min(...bTimes) : Infinity;
+            return aMin - bMin;
+          });
+        }
+        break;
+      }
+      case "closest_to_time": {
+        if (matchedDate && typeof filters.desired_time === "string") {
+          const target = toMinutes(filters.desired_time);
+          results.sort((a, b) => {
+            const aDay = a.availability.find(d => d.date === matchedDate);
+            const bDay = b.availability.find(d => d.date === matchedDate);
+            const aDiffs = aDay ? aDay.tee_times.filter(t => t.available).map(t => Math.abs(toMinutes(t.time) - target)) : [Infinity];
+            const bDiffs = bDay ? bDay.tee_times.filter(t => t.available).map(t => Math.abs(toMinutes(t.time) - target)) : [Infinity];
+            const aMin = aDiffs.length ? Math.min(...aDiffs) : Infinity;
+            const bMin = bDiffs.length ? Math.min(...bDiffs) : Infinity;
+            return aMin - bMin;
+          });
+        }
+        break;
+      }
+      case "longest":
+        results.sort((a, b) => b.yardage - a.yardage);
+        break;
+      case "shortest":
+        results.sort((a, b) => a.yardage - b.yardage);
+        break;
+      case "highest_slope":
+        results.sort((a, b) => b.slope - a.slope);
+        break;
+      case "newest":
+        results.sort((a, b) => b.year_built - a.year_built);
+        break;
+      case "oldest":
+        results.sort((a, b) => a.year_built - b.year_built);
+        break;
+      case "best_value":
+        results.sort((a, b) => (b.rating_stars / b.average_price) - (a.rating_stars / a.average_price));
         break;
     }
   }

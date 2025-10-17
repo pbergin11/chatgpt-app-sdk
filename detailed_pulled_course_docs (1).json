@@ -1,0 +1,1197 @@
+[
+  {
+    "id": "082fe8793777462cb827c6bdc85cff3d",
+    "exists": true,
+    "data": {
+      "data": {
+        "social": {
+          "youtube": "https://www.youtube.com/@cabramattagolfclub",
+          "instagram": "https://www.instagram.com/cabramattagolfclub",
+          "facebook": "https://www.facebook.com/cabramattagolfclub",
+          "x": "https://twitter.com/cabramattagolf",
+          "tiktok": "https://www.tiktok.com/@cabramattagolfclub"
+        },
+        "status": "open",
+        "verification": [
+          {
+            "verified_at": "2025-09-24T00:00:00Z",
+            "source": "User-provided summary",
+            "verified_by": "CourseSchemaExtractor"
+          }
+        ],
+        "overview": "Cabramatta Golf Club is a public-access 18-hole course in south-western Sydney, located at the corner of Cabramatta Road West and the Cumberland Highway. The venue is known for fast, true greens that still hold approach shots, offering a welcoming, well-kept local golf experience for players of all skill levels. The club also features two function rooms for special events and is praised for friendly service, catering, and a sociable atmosphere.",
+        "address": {
+          "city": "Cabramatta",
+          "country": "Australia",
+          "state": "NSW",
+          "street": "Corner Cabramatta Road West & Cumberland Hwy",
+          "postal_code": "2166"
+        },
+        "media": {
+          "cover": "",
+          "gallery": []
+        },
+        "brand_name": "Cabramatta Golf Club",
+        "seasonality": {
+          "frost_delay_policy": "As needed",
+          "aeration_windows": [],
+          "maintenance_closures": [],
+          "season_close": "Year-round",
+          "overseed_windows": [],
+          "typical_weather_notes": "Mild Sydney climate",
+          "season_open": "Year-round"
+        },
+        "badges": {
+          "best_in_state": false,
+          "top_public": false,
+          "top_resort": false,
+          "top_world": false,
+          "top_usa": false
+        },
+        "complex": {
+          "name": "Cabramatta Golf Club",
+          "course_order_hint": 1
+        },
+        "commerce": {
+          "loyalty": {
+            "benefits": [],
+            "program_name": ""
+          },
+          "payment": {
+            "cashless": "no",
+            "cards_accepted": [
+              "VISA",
+              "MASTERCARD"
+            ],
+            "tipping_policy": "Optional"
+          },
+          "policies": {
+            "rain_check": "Course discretion",
+            "cart_path_only_conditions": "Weather dependent",
+            "cancellation": {
+              "window_hours": 24,
+              "penalty": "May apply"
+            },
+            "single_rider_cart_fee": "no",
+            "no_show": "Charges may apply"
+          },
+          "tee_time_distribution": {
+            "secondary_channels": [],
+            "advance_booking_window_days": 7,
+            "primary_provider": "phone"
+          },
+          "pricing": {
+            "resident_rate": "no",
+            "cart_included": false,
+            "junior_senior_rates": "no",
+            "walk_rate_range": {
+              "max": 0,
+              "min": 0,
+              "currency": "AUD"
+            },
+            "dynamic_pricing": "no"
+          },
+          "rentals": {
+            "shoes": "no",
+            "brand_options": [],
+            "push_carts": "no",
+            "gps_carts": "no",
+            "clubs": "no"
+          }
+        },
+        "mapping": {
+          "water_stations": [],
+          "yardage_markers": [],
+          "bathrooms": [],
+          "provider_links": {
+            "_3d_gps": ""
+          },
+          "halfway_house": [],
+          "pin_sheet_format": ""
+        },
+        "i18n": {
+          "languages_supported": [
+            "en"
+          ]
+        },
+        "name": "Cabramatta Golf Club",
+        "golf": {
+          "retail": {
+            "brands": [],
+            "club_fitting": "no",
+            "pro_shop": "no"
+          },
+          "practice": {
+            "short_game": {
+              "chipping_green": "no",
+              "putting_course": "no",
+              "pitching_area": "no",
+              "bunkers": "no"
+            },
+            "range": {
+              "lights": "",
+              "stalls": 0,
+              "hours": {
+                "wed": "07:00-18:00",
+                "sun": "07:00-18:00",
+                "sat": "07:00-18:00",
+                "fri": "07:00-18:00",
+                "mon": "07:00-18:00",
+                "tue": "07:00-18:00",
+                "thu": "07:00-18:00"
+              },
+              "available": false,
+              "surface": "grass",
+              "ball_pricing": {
+                "max": 0,
+                "min": 0,
+                "currency": "AUD"
+              }
+            },
+            "tech": {
+              "force_plates": "no",
+              "toptracer": "no",
+              "gc_quad": "no",
+              "trackman_range": "no"
+            }
+          },
+          "courses": [
+            {
+              "amenities": {
+                "coaching": false,
+                "power_carts": false,
+                "push_carts": false,
+                "club_house": true,
+                "driving_range": false,
+                "simulator": false,
+                "practice_putting_green": true,
+                "lodging": false,
+                "rental_clubs": false,
+                "walking_allowed": true,
+                "short_course": false,
+                "caddies_available": false,
+                "spa": false
+              },
+              "rating_slope_by_tee": [],
+              "par_total": 72,
+              "style": "parkland",
+              "regulation_style": "Regulation",
+              "year_opened": 1960,
+              "yardage_total_yards": 6200,
+              "local_rules": "",
+              "pace_policy": "Maintain position with the group ahead.",
+              "holes": 18,
+              "name": "Cabramatta Golf Club",
+              "acres": 120,
+              "grasses": {
+                "tees": "Kikuyu",
+                "fairways": "Kikuyu",
+                "greens": "Bentgrass"
+              },
+              "target_round_time_minutes": 240,
+              "architecture": {
+                "original_architects": [
+                  "Unknown"
+                ],
+                "era": "Modern",
+                "renovation_history": []
+              },
+              "id": "cabramatta-golf-course"
+            }
+          ],
+          "course_count": 1,
+          "services": {
+            "water_stations": "no",
+            "storage": "no",
+            "starter_marshal": "no",
+            "caddie_details": {
+              "required_on": [],
+              "gratuity_policy": "Optional",
+              "typical_rate": {
+                "max": 0,
+                "min": 0,
+                "currency": "AUD"
+              }
+            },
+            "valet": "no",
+            "forecaddie_program": "no",
+            "showers": "no",
+            "on_course_fnb": "no",
+            "bag_drop": "no",
+            "club_cleaning": "no",
+            "beverage_cart": "no",
+            "locker_rooms": "no"
+          }
+        },
+        "hospitality": {
+          "lodging": {
+            "packages": [],
+            "has_hotel": false,
+            "properties": []
+          },
+          "parking": {
+            "onsite": "yes",
+            "ev_charging": {
+              "connector_types": [],
+              "ports": 0
+            }
+          },
+          "wellness": {
+            "fitness_classes": [],
+            "sauna": "no",
+            "steam": "no",
+            "spa": {
+              "hours": {
+                "wed": "",
+                "sun": "",
+                "sat": "",
+                "fri": "",
+                "mon": "",
+                "tue": "",
+                "thu": ""
+              },
+              "available": false,
+              "treatments": []
+            }
+          },
+          "transport": {
+            "ride_hailing_pickup": "yes",
+            "airport_shuttle": "no",
+            "local_shuttle": "no"
+          },
+          "recreation": {
+            "pickleball": "no",
+            "hiking_trails": "no",
+            "marina": "no",
+            "water_sports": [],
+            "tennis": "no",
+            "beach": "no",
+            "other": [],
+            "bikes": "no"
+          },
+          "event_spaces": {
+            "meetings": {
+              "rooms": 2,
+              "av_support": "no",
+              "largest_room_capacity": 120,
+              "supported": "yes"
+            },
+            "weddings": {
+              "brochure_url": "",
+              "capacity": 0,
+              "supported": "no"
+            }
+          },
+          "dining": {
+            "room_service": "no",
+            "venues": [],
+            "beverage_program": {
+              "cocktail_bar": "no",
+              "craft_beer": "no",
+              "sommelier": "no"
+            }
+          }
+        },
+        "operations": {
+          "checkin": {
+            "location": "pro_shop",
+            "min_minutes_before": 15
+          },
+          "accessibility": {
+            "accessible_paths": "no",
+            "ada_carts": "no",
+            "tees_for_all_abilities": "yes",
+            "rental_accessibility": "Limited"
+          },
+          "alcohol_policy": "Licensed premises; no BYO alcohol",
+          "dress_code": "Neat golf attire",
+          "drone_policy": "Not permitted without approval",
+          "outside_food_policy": "No outside catering for events",
+          "code_of_conduct": "Respect course and other players",
+          "safety": {
+            "medical": {
+              "aed_locations": [],
+              "first_aid": "no"
+            },
+            "lightning_detection": {
+              "system": "None",
+              "auto_warning": "no"
+            },
+            "wildlife_notices": [],
+            "emergency_contacts": {
+              "on_course_phone": "",
+              "security": ""
+            },
+            "shelters": []
+          }
+        },
+        "programs": {
+          "leagues": [],
+          "instruction_academy": {
+            "tech_stack": [],
+            "ladies_programs": "no",
+            "coaches": [],
+            "clinics": "no",
+            "junior_programs": "no"
+          },
+          "tournaments_hosted": [],
+          "outings_groups": {
+            "contact": {
+              "phone": "(02) 9602 8283",
+              "website": "http://www.cabragolf.com.au",
+              "email": "info@cabragolf.com.au"
+            },
+            "catering_options": [],
+            "max_players": 0,
+            "min_players": 0,
+            "group_rate": {
+              "max": 0,
+              "min": 0,
+              "currency": "AUD"
+            }
+          },
+          "memberships": {
+            "categories": [],
+            "type": "public",
+            "guest_policy": "",
+            "reciprocity": []
+          }
+        },
+        "id": "082fe8793777462cb827c6bdc85cff3d",
+        "contact": {
+          "phone": "(02) 9602 8283",
+          "website": "http://www.cabragolf.com.au",
+          "email": "info@cabragolf.com.au"
+        }
+      },
+      "source": "llm_structured_v2",
+      "updated_at": "2025-09-24T02:51:51.695000+00:00",
+      "course_name": "Cabramatta Golf Club",
+      "course_id": "082fe8793777462cb827c6bdc85cff3d"
+    }
+  },
+  {
+    "id": "094c92346602494a99debb1b4c7b6a7c",
+    "exists": true,
+    "data": {
+      "data": {
+        "social": {
+          "youtube": "",
+          "instagram": "",
+          "facebook": "",
+          "x": "",
+          "tiktok": ""
+        },
+        "status": "open",
+        "verification": [
+          {
+            "source": "source_provided_text",
+            "verified_at": "2025-09-29T00:00:00Z",
+            "verified_by": "assistant_extractor"
+          }
+        ],
+        "overview": "Private 18-hole championship golf course in Little Rock, AR on 131 acres. Designed by Lyndy Lindsey, the course features five sets of tees, abundant water and bunkers, several blind shots and doglegs, and a signature island 14th green shaped like Arkansas. Facilities include an extra-large driving range, large putting green, short game area, 9,200 sq ft clubhouse with The 19th Hole Grill, fitness center, locker rooms, pro shop, tennis court, and pools. Home course for University of Arkansas at Little Rock teams; membership required for play.",
+        "address": {
+          "city": "Little Rock",
+          "country": "United States",
+          "state": "AR",
+          "street": "3A Eagle Hill Court",
+          "postal_code": "72210"
+        },
+        "media": {
+          "cover": "",
+          "gallery": []
+        },
+        "brand_name": "Eagle Hill Golf & Athletic Club",
+        "seasonality": {
+          "frost_delay_policy": "",
+          "aeration_windows": [],
+          "maintenance_closures": [],
+          "season_close": "",
+          "overseed_windows": [],
+          "typical_weather_notes": "",
+          "season_open": ""
+        },
+        "badges": {
+          "best_in_state": false,
+          "top_public": false,
+          "top_resort": false,
+          "top_world": false,
+          "top_usa": false
+        },
+        "complex": {
+          "name": "Eagle Hill Golf & Athletic Club",
+          "course_order_hint": 1
+        },
+        "commerce": {
+          "loyalty": {
+            "benefits": [],
+            "program_name": ""
+          },
+          "payment": {
+            "cashless": "",
+            "cards_accepted": [],
+            "tipping_policy": ""
+          },
+          "policies": {
+            "rain_check": "",
+            "cart_path_only_conditions": "",
+            "cancellation": {
+              "window_hours": 0,
+              "penalty": ""
+            },
+            "single_rider_cart_fee": "",
+            "no_show": ""
+          },
+          "tee_time_distribution": {
+            "secondary_channels": [],
+            "advance_booking_window_days": 4,
+            "primary_provider": ""
+          },
+          "pricing": {
+            "resident_rate": "",
+            "cart_included": false,
+            "junior_senior_rates": "",
+            "walk_rate_range": {
+              "max": 0,
+              "min": 0,
+              "currency": "USD"
+            },
+            "dynamic_pricing": ""
+          },
+          "rentals": {
+            "shoes": "",
+            "brand_options": [],
+            "push_carts": "",
+            "gps_carts": "",
+            "clubs": ""
+          }
+        },
+        "mapping": {
+          "water_stations": [],
+          "yardage_markers": [],
+          "bathrooms": [],
+          "provider_links": {
+            "_3d_gps": ""
+          },
+          "halfway_house": [],
+          "pin_sheet_format": ""
+        },
+        "i18n": {
+          "languages_supported": [
+            "en"
+          ]
+        },
+        "name": "Eagle Hill Golf & Athletic Club",
+        "golf": {
+          "retail": {
+            "brands": [],
+            "club_fitting": "",
+            "pro_shop": "yes"
+          },
+          "practice": {
+            "short_game": {
+              "chipping_green": "yes",
+              "putting_course": "yes",
+              "pitching_area": "",
+              "bunkers": "yes"
+            },
+            "range": {
+              "lights": "",
+              "stalls": 0,
+              "hours": {
+                "wed": "09:00-18:00",
+                "sun": "09:00-18:00",
+                "sat": "09:00-18:00",
+                "fri": "09:00-18:00",
+                "mon": "09:00-18:00",
+                "tue": "09:00-18:00",
+                "thu": "09:00-18:00"
+              },
+              "available": true,
+              "surface": "both",
+              "ball_pricing": {
+                "max": 0,
+                "min": 0,
+                "currency": "USD"
+              }
+            },
+            "tech": {
+              "force_plates": "",
+              "toptracer": "",
+              "gc_quad": "",
+              "trackman_range": ""
+            }
+          },
+          "courses": [
+            {
+              "amenities": {
+                "power_carts": true,
+                "coaching": true,
+                "push_carts": false,
+                "club_house": true,
+                "driving_range": true,
+                "short_course": false,
+                "practice_putting_green": true,
+                "lodging": false,
+                "rental_clubs": false,
+                "walking_allowed": false,
+                "simulator": false,
+                "caddies_available": false,
+                "spa": false
+              },
+              "rating_slope_by_tee": [
+                {
+                  "tee_color": "Black",
+                  "yardage_yards": 6927,
+                  "slope": 130,
+                  "par": 72,
+                  "course_rating": 73.8
+                },
+                {
+                  "tee_color": "Blue",
+                  "yardage_yards": 6521,
+                  "slope": 121,
+                  "par": 72,
+                  "course_rating": 71.8
+                },
+                {
+                  "tee_color": "White",
+                  "yardage_yards": 6052,
+                  "slope": 118,
+                  "par": 72,
+                  "course_rating": 69.5
+                },
+                {
+                  "tee_color": "Gold",
+                  "yardage_yards": 5220,
+                  "slope": 110,
+                  "par": 72,
+                  "course_rating": 65.8
+                },
+                {
+                  "tee_color": "Red",
+                  "yardage_yards": 4680,
+                  "slope": 119,
+                  "par": 72,
+                  "course_rating": 67.7
+                }
+              ],
+              "par_total": 72,
+              "regulation_style": "",
+              "style": "other",
+              "year_opened": 0,
+              "yardage_total_yards": 6927,
+              "local_rules": "",
+              "pace_policy": "",
+              "holes": 18,
+              "name": "Eagle Hill Golf Course",
+              "acres": 131,
+              "grasses": {
+                "tees": "Zoysia",
+                "greens": "Champion Bermuda",
+                "fairways": "419 Bermuda"
+              },
+              "target_round_time_minutes": 0,
+              "architecture": {
+                "original_architects": [
+                  "Lyndy Lindsey"
+                ],
+                "era": "",
+                "renovation_history": []
+              },
+              "id": "eagle-hill-main"
+            }
+          ],
+          "course_count": 1,
+          "services": {
+            "water_stations": "",
+            "storage": "",
+            "starter_marshal": "",
+            "caddie_details": {
+              "required_on": [],
+              "gratuity_policy": "",
+              "typical_rate": {
+                "max": 0,
+                "min": 0,
+                "currency": "USD"
+              }
+            },
+            "valet": "",
+            "forecaddie_program": "",
+            "showers": "yes",
+            "on_course_fnb": "",
+            "bag_drop": "",
+            "club_cleaning": "",
+            "beverage_cart": "",
+            "locker_rooms": "yes"
+          }
+        },
+        "hospitality": {
+          "lodging": {
+            "packages": [],
+            "has_hotel": false,
+            "properties": []
+          },
+          "parking": {
+            "onsite": "",
+            "ev_charging": {
+              "connector_types": [],
+              "ports": 0
+            }
+          },
+          "wellness": {
+            "fitness_classes": [],
+            "sauna": "",
+            "steam": "",
+            "spa": {
+              "hours": {
+                "wed": "",
+                "sun": "",
+                "sat": "",
+                "fri": "",
+                "mon": "",
+                "tue": "",
+                "thu": ""
+              },
+              "available": false,
+              "treatments": []
+            }
+          },
+          "transport": {
+            "ride_hailing_pickup": "",
+            "airport_shuttle": "",
+            "local_shuttle": ""
+          },
+          "recreation": {
+            "pickleball": "",
+            "hiking_trails": "",
+            "marina": "",
+            "water_sports": [],
+            "tennis": "yes",
+            "beach": "",
+            "other": [
+              "Junior Olympic pool",
+              "Wading pool",
+              "Fitness center",
+              "Hard surface tennis court"
+            ],
+            "bikes": ""
+          },
+          "event_spaces": {
+            "meetings": {
+              "rooms": 0,
+              "av_support": "",
+              "largest_room_capacity": 0,
+              "supported": "yes"
+            },
+            "weddings": {
+              "brochure_url": "",
+              "capacity": 0,
+              "supported": ""
+            }
+          },
+          "dining": {
+            "room_service": "",
+            "venues": [
+              {
+                "name": "The 19th Hole Grill",
+                "price_tier": "$$",
+                "location": "clubhouse",
+                "dietary": {
+                  "vegan": "",
+                  "halal": "",
+                  "vegetarian": "",
+                  "kosher": "",
+                  "gluten_free": ""
+                },
+                "cuisine": [],
+                "reservations": {
+                  "provider": "",
+                  "url": "",
+                  "phone": ""
+                },
+                "notes": "Clubhouse restaurant for members and events.",
+                "hours": {
+                  "fri": "",
+                  "sun": "",
+                  "sat": "",
+                  "mon": "",
+                  "tue": "",
+                  "wed": "",
+                  "thu": ""
+                }
+              }
+            ],
+            "beverage_program": {
+              "cocktail_bar": "",
+              "craft_beer": "",
+              "sommelier": ""
+            }
+          }
+        },
+        "operations": {
+          "checkin": {
+            "location": "pro_shop",
+            "min_minutes_before": 0
+          },
+          "accessibility": {
+            "accessible_paths": "",
+            "ada_carts": "",
+            "tees_for_all_abilities": "",
+            "rental_accessibility": ""
+          },
+          "alcohol_policy": "",
+          "dress_code": "",
+          "drone_policy": "",
+          "outside_food_policy": "",
+          "code_of_conduct": "",
+          "safety": {
+            "medical": {
+              "aed_locations": [],
+              "first_aid": ""
+            },
+            "lightning_detection": {
+              "system": "",
+              "auto_warning": ""
+            },
+            "wildlife_notices": [],
+            "emergency_contacts": {
+              "on_course_phone": "",
+              "security": ""
+            },
+            "shelters": []
+          }
+        },
+        "programs": {
+          "leagues": [],
+          "instruction_academy": {
+            "tech_stack": [],
+            "ladies_programs": "",
+            "coaches": [],
+            "clinics": "",
+            "junior_programs": "yes"
+          },
+          "tournaments_hosted": [],
+          "outings_groups": {
+            "contact": {
+              "phone": "",
+              "website": "http://www.eaglehillgolfac.com",
+              "email": "eaglehill.golf@lindseymanagement.com"
+            },
+            "catering_options": [],
+            "max_players": 0,
+            "min_players": 0,
+            "group_rate": {
+              "max": 0,
+              "min": 0,
+              "currency": "USD"
+            }
+          },
+          "memberships": {
+            "categories": [
+              {
+                "name": "Platinum Seven Day Membership",
+                "access_rights": "7 days a week; individual or family",
+                "price_range": {
+                  "max": 235,
+                  "min": 235,
+                  "currency": "USD"
+                }
+              },
+              {
+                "name": "Platinum Weekday Membership",
+                "access_rights": "Monday-Friday (excludes holidays); individual or family",
+                "price_range": {
+                  "max": 165,
+                  "min": 165,
+                  "currency": "USD"
+                }
+              },
+              {
+                "name": "Young Executive Membership",
+                "access_rights": "Age 34 & under; 7 days a week; individual or family",
+                "price_range": {
+                  "max": 150,
+                  "min": 150,
+                  "currency": "USD"
+                }
+              }
+            ],
+            "type": "private",
+            "guest_policy": "",
+            "reciprocity": []
+          }
+        },
+        "id": "094c92346602494a99debb1b4c7b6a7c",
+        "contact": {
+          "phone": "(501) 455-8848",
+          "website": "http://www.eaglehillgolfac.com",
+          "email": "eaglehill.golf@lindseymanagement.com"
+        }
+      },
+      "source": "llm_structured_v2",
+      "updated_at": "2025-09-29T23:49:05.458000+00:00",
+      "course_name": "Eagle Hill Golf & Athletic Club",
+      "course_id": "094c92346602494a99debb1b4c7b6a7c"
+    }
+  },
+  {
+    "id": "15353cb9954f4a8fba6cd456a9900ef4",
+    "exists": true,
+    "data": {
+      "data": {
+        "social": {
+          "youtube": "",
+          "instagram": "",
+          "facebook": "",
+          "x": "",
+          "tiktok": ""
+        },
+        "status": "open",
+        "verification": [],
+        "overview": "Oak Hills Country Club is a public, historic 9-hole golf facility serving Chicago's southwest suburbs for over 100 years. The course mixes par-3s, par-4s and par-5s across nine holes (par 34) and is known for community-focused play. Tee times are available via the online tee time portal. Walk and cart fee options are offered; pull carts and 9‑hole power carts are available for rent. Oak Hills has received Golfers' Choice recognition (USA and Illinois).",
+        "address": {
+          "city": "Palos Heights",
+          "country": "United States",
+          "state": "IL",
+          "street": "13335 S Oakview Ct",
+          "postal_code": "60463"
+        },
+        "media": {
+          "cover": "",
+          "gallery": []
+        },
+        "brand_name": "",
+        "seasonality": {
+          "frost_delay_policy": "",
+          "aeration_windows": [],
+          "maintenance_closures": [],
+          "season_close": "",
+          "overseed_windows": [],
+          "typical_weather_notes": "",
+          "season_open": ""
+        },
+        "badges": {
+          "best_in_state": true,
+          "top_public": false,
+          "top_resort": false,
+          "top_world": false,
+          "top_usa": true
+        },
+        "complex": {
+          "name": "",
+          "course_order_hint": 0
+        },
+        "commerce": {
+          "loyalty": {
+            "benefits": [],
+            "program_name": ""
+          },
+          "payment": {
+            "cashless": "",
+            "cards_accepted": [],
+            "tipping_policy": ""
+          },
+          "policies": {
+            "rain_check": "Rain checks are issued if the course closes due to inclement weather or at the discretion of Golf Professional Staff. A 9-hole rain check will be given if the player has not completed 4 holes. Golfers are responsible for monitoring hazardous weather and are encouraged to seek shelter when conditions are threatening.",
+            "cart_path_only_conditions": "",
+            "cancellation": {
+              "window_hours": 0,
+              "penalty": ""
+            },
+            "single_rider_cart_fee": "",
+            "no_show": ""
+          },
+          "tee_time_distribution": {
+            "secondary_channels": [],
+            "advance_booking_window_days": 0,
+            "primary_provider": "official website"
+          },
+          "pricing": {
+            "resident_rate": "",
+            "cart_included": false,
+            "junior_senior_rates": "yes",
+            "walk_rate_range": {
+              "max": 25,
+              "min": 20,
+              "currency": "USD"
+            },
+            "dynamic_pricing": ""
+          },
+          "rentals": {
+            "shoes": "",
+            "brand_options": [],
+            "push_carts": "yes",
+            "gps_carts": "",
+            "clubs": ""
+          }
+        },
+        "mapping": {
+          "water_stations": [],
+          "yardage_markers": [],
+          "bathrooms": [],
+          "provider_links": {
+            "_3d_gps": ""
+          },
+          "halfway_house": [],
+          "pin_sheet_format": ""
+        },
+        "i18n": {
+          "languages_supported": []
+        },
+        "name": "Oak Hills Country Club",
+        "golf": {
+          "retail": {
+            "brands": [],
+            "club_fitting": "",
+            "pro_shop": "yes"
+          },
+          "practice": {
+            "short_game": {
+              "chipping_green": "",
+              "putting_course": "",
+              "pitching_area": "",
+              "bunkers": ""
+            },
+            "range": {
+              "lights": "",
+              "stalls": 0,
+              "hours": {
+                "wed": "",
+                "sun": "",
+                "sat": "",
+                "fri": "",
+                "mon": "",
+                "tue": "",
+                "thu": ""
+              },
+              "available": false,
+              "surface": "both",
+              "ball_pricing": {
+                "max": 0,
+                "min": 0,
+                "currency": "USD"
+              }
+            },
+            "tech": {
+              "force_plates": "",
+              "toptracer": "",
+              "gc_quad": "",
+              "trackman_range": ""
+            }
+          },
+          "courses": [
+            {
+              "amenities": {
+                "power_carts": true,
+                "coaching": false,
+                "push_carts": true,
+                "club_house": true,
+                "driving_range": false,
+                "simulator": false,
+                "practice_putting_green": false,
+                "lodging": false,
+                "rental_clubs": false,
+                "walking_allowed": true,
+                "short_course": false,
+                "caddies_available": false,
+                "spa": false
+              },
+              "rating_slope_by_tee": [],
+              "regulation_style": "",
+              "par_total": 34,
+              "style": "other",
+              "year_opened": 0,
+              "yardage_total_yards": 0,
+              "local_rules": "No outside alcoholic beverages permitted per Illinois liquor law; staff may inspect coolers. Pace of play: maximum 2 hours 15 minutes for 9 holes and is enforced. Every player must have their own clubs and bag. Groups limited to a maximum of four players. Anyone under age 12 must be accompanied by an adult. Cart operation rules: renters must be 18+ with a valid driver’s license; maximum 2 riders and 2 bags per cart; maximum 2 carts per foursome; single riders in a group are not permitted; no unattended children in carts; keep carts at least 30 feet from tees and greens and use cart paths, detour around bunkers.",
+              "pace_policy": "2 hours 15 minutes maximum for 9 holes; enforced",
+              "holes": 9,
+              "name": "Oak Hills Country Club (9-hole)",
+              "grasses": {
+                "tees": "",
+                "fairways": "",
+                "greens": ""
+              },
+              "acres": 0,
+              "target_round_time_minutes": 135,
+              "architecture": {
+                "original_architects": [],
+                "era": "",
+                "renovation_history": []
+              },
+              "id": "oak-hills-9"
+            }
+          ],
+          "course_count": 1,
+          "services": {
+            "water_stations": "",
+            "storage": "",
+            "starter_marshal": "",
+            "caddie_details": {
+              "required_on": [],
+              "gratuity_policy": "",
+              "typical_rate": {
+                "max": 0,
+                "min": 0,
+                "currency": "USD"
+              }
+            },
+            "valet": "",
+            "forecaddie_program": "",
+            "showers": "",
+            "on_course_fnb": "",
+            "bag_drop": "",
+            "club_cleaning": "",
+            "beverage_cart": "",
+            "locker_rooms": ""
+          }
+        },
+        "hospitality": {
+          "lodging": {
+            "packages": [],
+            "has_hotel": false,
+            "properties": []
+          },
+          "parking": {
+            "onsite": "",
+            "ev_charging": {
+              "connector_types": [],
+              "ports": 0
+            }
+          },
+          "wellness": {
+            "fitness_classes": [],
+            "sauna": "",
+            "steam": "",
+            "spa": {
+              "hours": {
+                "wed": "",
+                "sun": "",
+                "sat": "",
+                "fri": "",
+                "mon": "",
+                "tue": "",
+                "thu": ""
+              },
+              "available": false,
+              "treatments": []
+            }
+          },
+          "transport": {
+            "ride_hailing_pickup": "",
+            "airport_shuttle": "",
+            "local_shuttle": ""
+          },
+          "recreation": {
+            "pickleball": "",
+            "hiking_trails": "",
+            "marina": "",
+            "water_sports": [],
+            "tennis": "",
+            "beach": "",
+            "other": [],
+            "bikes": ""
+          },
+          "event_spaces": {
+            "meetings": {
+              "rooms": 0,
+              "av_support": "",
+              "largest_room_capacity": 0,
+              "supported": ""
+            },
+            "weddings": {
+              "brochure_url": "",
+              "capacity": 0,
+              "supported": ""
+            }
+          },
+          "dining": {
+            "room_service": "",
+            "venues": [],
+            "beverage_program": {
+              "cocktail_bar": "",
+              "craft_beer": "",
+              "sommelier": ""
+            }
+          }
+        },
+        "operations": {
+          "checkin": {
+            "location": "pro_shop",
+            "min_minutes_before": 0
+          },
+          "accessibility": {
+            "accessible_paths": "",
+            "ada_carts": "",
+            "tees_for_all_abilities": "",
+            "rental_accessibility": ""
+          },
+          "alcohol_policy": "No outside alcoholic beverages allowed per Illinois liquor law; staff may inspect coolers.",
+          "dress_code": "",
+          "drone_policy": "",
+          "outside_food_policy": "",
+          "code_of_conduct": "",
+          "safety": {
+            "medical": {
+              "aed_locations": [],
+              "first_aid": ""
+            },
+            "lightning_detection": {
+              "system": "",
+              "auto_warning": ""
+            },
+            "wildlife_notices": [],
+            "emergency_contacts": {
+              "on_course_phone": "",
+              "security": ""
+            },
+            "shelters": []
+          }
+        },
+        "programs": {
+          "leagues": [],
+          "instruction_academy": {
+            "tech_stack": [],
+            "ladies_programs": "",
+            "coaches": [],
+            "clinics": "",
+            "junior_programs": ""
+          },
+          "tournaments_hosted": [],
+          "outings_groups": {
+            "contact": {
+              "phone": "",
+              "website": "",
+              "email": "null@example.com"
+            },
+            "catering_options": [],
+            "max_players": 0,
+            "min_players": 0,
+            "group_rate": {
+              "max": 0,
+              "min": 0,
+              "currency": "USD"
+            }
+          },
+          "memberships": {
+            "categories": [],
+            "type": "public",
+            "guest_policy": "",
+            "reciprocity": []
+          }
+        },
+        "id": "15353cb9954f4a8fba6cd456a9900ef4",
+        "contact": {
+          "phone": "(708) 448-5544",
+          "website": "https://www.oakhills.com",
+          "email": "null@example.com"
+        }
+      },
+      "source": "llm_structured_v2",
+      "updated_at": "2025-10-05T16:43:24.741000+00:00",
+      "course_name": "Oak Hills Country Club",
+      "course_id": "15353cb9954f4a8fba6cd456a9900ef4"
+    }
+  }
+]

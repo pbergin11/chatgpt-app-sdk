@@ -223,16 +223,39 @@ const handler = createMcpHandler(async (server) => {
         filters: z.object({
           // Course type filter
           type: z.enum(["public", "private", "semi-private", "resort"]).optional().describe("Course type"),
+          types: z.array(z.enum(["public", "private", "semi-private", "resort"]) ).min(1).optional().describe("One or more course types to include"),
           
           // Sorting options
-          sort_by: z.enum(["cheapest", "most_expensive", "most_available", "highest_rated"]).optional().describe("How to sort results"),
+          sort_by: z.enum(["cheapest", "most_expensive", "most_available", "highest_rated", "cheapest_on_date", "earliest_available", "closest_to_time", "longest", "shortest", "highest_slope", "newest", "oldest", "best_value"]).optional().describe("How to sort results"),
+          desired_time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe("Preferred time in HH:mm for closest_to_time sort"),
           
           // Price filters
           max_price: z.number().optional().describe("Maximum average price in USD"),
           min_price: z.number().optional().describe("Minimum average price in USD"),
+          price_on_date_min: z.number().optional().describe("Minimum tee time price on matched date"),
+          price_on_date_max: z.number().optional().describe("Maximum tee time price on matched date"),
           
           // Rating filter
           min_rating: z.number().min(1).max(5).optional().describe("Minimum star rating (1-5)"),
+          course_rating_min: z.number().optional().describe("Minimum USGA course rating"),
+          course_rating_max: z.number().optional().describe("Maximum USGA course rating"),
+          min_reviews: z.number().int().optional().describe("Minimum number of reviews"),
+
+          // Keyword filters
+          search_text: z.string().optional().describe("Free-text search across name, description, city, designer"),
+          local_rules_contains: z.string().optional().describe("Substring to match within local rules"),
+
+          // Course attributes
+          holes_in: z.array(z.union([z.literal(9), z.literal(18), z.literal(27), z.literal(36)])).min(1).optional().describe("Allowed hole counts"),
+          par_min: z.number().int().optional().describe("Minimum par"),
+          par_max: z.number().int().optional().describe("Maximum par"),
+          yardage_min: z.number().int().optional().describe("Minimum yardage"),
+          yardage_max: z.number().int().optional().describe("Maximum yardage"),
+          slope_min: z.number().int().optional().describe("Minimum slope rating"),
+          slope_max: z.number().int().optional().describe("Maximum slope rating"),
+          designer: z.string().optional().describe("Designer name contains"),
+          year_built_min: z.number().int().optional().describe("Built year >="),
+          year_built_max: z.number().int().optional().describe("Built year <="),
           
           // Amenity filters (all boolean)
           spa: z.boolean().optional().describe("Must have spa facilities"),
@@ -242,6 +265,25 @@ const handler = createMcpHandler(async (server) => {
           restaurant: z.boolean().optional().describe("Must have restaurant"),
           golf_lessons: z.boolean().optional().describe("Must offer golf lessons"),
           lodging: z.boolean().optional().describe("Must have lodging/hotel"),
+          has_range: z.boolean().optional().describe("Practice range available (practice.range_available or driving_range)"),
+          private_only: z.boolean().optional().describe("Limit to private courses"),
+          pro_shop: z.boolean().optional().describe("Must have pro shop"),
+          bar: z.boolean().optional().describe("Must have bar"),
+          locker_rooms: z.boolean().optional().describe("Must have locker rooms"),
+          event_space: z.boolean().optional().describe("Must have event space"),
+          practice_bunker: z.boolean().optional().describe("Must have practice bunker"),
+          chipping_green: z.boolean().optional().describe("Must have chipping green"),
+          practice_range_surface: z.enum(["grass","mats","both"]).optional().describe("Range surface required"),
+
+          // Availability filters
+          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("Specific date in YYYY-MM-DD to check availability"),
+          relative_date: z.enum(["today","tomorrow","this_saturday","this_sunday","next_saturday","next_sunday","this_weekend","next_weekend"]).optional().describe("Relative date helper; server will resolve to a YYYY-MM-DD"),
+          include_unavailable: z.boolean().optional().describe("If true, include courses with 0 available tee times for the matched date so they can be shown greyed out"),
+          start_time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe("Window start time HH:mm on matched date"),
+          end_time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe("Window end time HH:mm on matched date"),
+          time_window: z.enum(["morning","midday","afternoon","twilight"]).optional().describe("Convenience window on matched date"),
+          players_min: z.number().int().min(1).max(4).optional().describe("At least this many player spots available in a single tee time on matched date"),
+          has_availability_any: z.boolean().optional().describe("Require at least one available tee time in the next 7 days (regardless of 'date')"),
         }).optional().describe("Optional filters for refining search results"),
       },
       annotations: {
@@ -285,8 +327,44 @@ const handler = createMcpHandler(async (server) => {
         };
       }
 
+      // Resolve relative date if present
+      const resolveRelativeDate = (rel?: string): string | undefined => {
+        if (!rel) return undefined;
+        const d = new Date();
+        const day = d.getDay(); // 0 Sun ... 6 Sat
+        const toISO = (dt: Date) => dt.toISOString().split("T")[0];
+        const addDays = (n: number) => { const nd = new Date(d); nd.setDate(d.getDate() + n); return nd; };
+        switch (rel) {
+          case "today": return toISO(d);
+          case "tomorrow": return toISO(addDays(1));
+          case "this_saturday": return toISO(addDays((6 - day + 7) % 7));
+          case "this_sunday": return toISO(addDays((7 - day) % 7));
+          case "next_saturday": return toISO(addDays(((6 - day + 7) % 7) + 7 * ((6 - day + 7) % 7 === 0 ? 1 : 0)));
+          case "next_sunday": return toISO(addDays(((7 - day) % 7) + 7 * (((7 - day) % 7) === 0 ? 1 : 0)));
+          case "this_weekend": {
+            const sat = addDays((6 - day + 7) % 7);
+            return toISO(sat);
+          }
+          case "next_weekend": {
+            const satOffset = (6 - day + 7) % 7;
+            const satNext = addDays(satOffset === 0 ? 7 : satOffset + 7);
+            return toISO(satNext);
+          }
+        }
+        return undefined;
+      };
+
+      const matchedDate = filters?.date ?? resolveRelativeDate(filters?.relative_date);
+      const effectiveFilters = { ...(filters ?? {}) } as any;
+      if (matchedDate && typeof effectiveFilters.include_unavailable === "undefined") {
+        effectiveFilters.include_unavailable = true; // default: include for greying in UI
+      }
+      if (matchedDate) {
+        effectiveFilters.date = matchedDate;
+      }
+
       // Search courses using mock data
-      const courses = searchCoursesByArea(city, state, country, radius, filters);
+      const courses = searchCoursesByArea(city, state, country, radius, effectiveFilters);
 
       // Format location string for response
       const locationStr = getLocationDescription(city, state, country);
@@ -301,6 +379,9 @@ const handler = createMcpHandler(async (server) => {
           highest_rated: "sorted by rating",
         };
         summaryText += ` Results ${sortLabels[filters.sort_by]}.`;
+      }
+      if (matchedDate) {
+        summaryText += ` Availability checked for ${matchedDate}.`;
       }
 
       const response = {
@@ -323,15 +404,21 @@ const handler = createMcpHandler(async (server) => {
             par: course.par,
             amenities: course.amenities,
             availability: course.availability, // Include availability data for markers
+            ...(matchedDate ? (() => {
+              const day = course.availability.find(d => d.date === matchedDate);
+              const availableSlots = day ? day.tee_times.filter(t => t.available).length : 0;
+              return { matched_date: matchedDate, available_on_date: availableSlots > 0 };
+            })() : {}),
           })),
           searchContext: { 
             city, 
             state, 
             country, 
             radius, 
-            filters, 
+            filters: effectiveFilters, 
             timestamp: new Date().toISOString(),
             total_results: courses.length,
+            matched_date: matchedDate ?? null,
           },
         },
         _meta: golfToolMeta,
@@ -415,7 +502,8 @@ const handler = createMcpHandler(async (server) => {
       const detailsText = `${course.name} is a ${course.type} ${course.holes}-hole course in ${course.city}${course.state ? ', ' + course.state : ''}${course.country ? ', ' + course.country : ''}. ` +
         `Par ${course.par}, ${course.yardage} yards. Designed by ${course.designer} in ${course.year_built}. ` +
         `Average price: $${course.average_price}. Rating: ${course.rating_stars} stars (${course.reviews_count} reviews). ` +
-        `${totalAvailableSlots} tee times available in the next 7 days.`;
+        `${totalAvailableSlots} tee times available in the next 7 days.` +
+        `${course.local_rules ? ' Local rules: ' + course.local_rules : ''}`;
 
       const response = {
         content: [
