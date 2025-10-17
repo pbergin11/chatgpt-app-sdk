@@ -367,7 +367,12 @@ export default function GolfPage() {
 
       {/* Bottom Course Cards */}
       {toolOutput?.courses?.length ? (
-        <div className="absolute bottom-0 left-0 right-0 z-10 pb-4">
+        <div 
+          className="absolute bottom-0 left-0 right-0 z-10"
+          style={{ 
+            paddingBottom: `${(safeArea?.insets?.bottom ?? 0) + 16}px` 
+          }}
+        >
           <div className="overflow-x-auto overflow-y-visible px-4 pb-2 scrollbar-hide">
             <div className="flex gap-3 min-w-min py-2">
               {toolOutput.courses.map((c) => {
@@ -377,11 +382,11 @@ export default function GolfPage() {
                     key={c.id}
                     className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out ${
                       isSelected 
-                        ? "ring-2 ring-[var(--color-accent-teal)] scale-105" 
+                        ? "ring-2 ring-[var(--color-accent-teal)]" 
                         : "hover:translate-y-[-2px]"
                     }`}
                     style={{ 
-                      width: isSelected ? '360px' : '280px',
+                      width: isSelected ? '320px' : '280px',
                       transformOrigin: 'bottom center'
                     }}
                     onClick={() => onSelectCourse(c.id)}
@@ -430,7 +435,7 @@ export default function GolfPage() {
                         {/* Course Image */}
                         <div 
                           className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[16px]"
-                          style={{ height: '160px' }}
+                          style={{ height: '120px' }}
                         >
                           <img
                             src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
@@ -439,36 +444,36 @@ export default function GolfPage() {
                           />
                           {/* Distance Badge */}
                           {typeof c.distance === "number" && (
-                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-black font-semibold">
+                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold">
                               {c.distance} mi
                             </div>
                           )}
                         </div>
 
                         {/* Course Info */}
-                        <div className="p-4 text-left">
-                          <h3 className="font-bold text-[var(--color-ink-black)] text-lg mb-1 line-clamp-1">
+                        <div className="p-3 text-left">
+                          <h3 className="font-bold text-[var(--color-ink-black)] text-base mb-1 line-clamp-1">
                             {c.name}
                           </h3>
-                          <p className="text-[var(--color-ink-gray)] text-sm mb-3">
+                          <p className="text-[var(--color-ink-gray)] text-xs mb-2">
                             {c.city}{c.state ? `, ${c.state}` : ""}
                           </p>
 
                           {/* Tags */}
-                          <div className="flex gap-2 mb-3">
+                          <div className="flex gap-1.5 mb-2">
                             {c.type && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
                                 {c.type}
                               </span>
                             )}
-                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs">
                               18 holes
                             </span>
                           </div>
 
                           {/* Action Button */}
                           <button
-                            className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-3 text-sm font-medium hover:opacity-90 transition cursor-pointer"
+                            className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-3 py-2 text-sm font-medium hover:opacity-90 transition cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               onBook();
