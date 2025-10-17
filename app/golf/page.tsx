@@ -297,68 +297,72 @@ export default function GolfPage() {
       </div>
 
       {/* Top Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-stretch w-[280px] pointer-events-none">
         {/* Debug Widget */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] px-3 py-2 text-xs text-black shadow-lg font-mono max-h-[80vh] overflow-y-auto">
-          <div className="font-bold mb-2 text-[var(--color-primary-red)] text-sm">SDK Debug Info</div>
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg pointer-events-auto">
+          {/* Fullscreen Button at Top */}
+          <button
+            className="w-full bg-[var(--color-primary-red)] text-white rounded-t-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition"
+            onClick={() => requestDisplayMode("fullscreen")}
+            aria-label="Enter fullscreen"
+          >
+            Fullscreen
+          </button>
           
-          {/* Connection Status */}
-          <div className="mb-2 pb-2 border-b border-gray-200">
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Connection</div>
-            <div><span className="text-[var(--color-ink-gray)]">window.openai:</span> <span className="font-semibold">{hasOpenAI ? '✓ exists' : '✗ missing'}</span></div>
-          </div>
-          
-          {/* Layout Properties */}
-          <div className="mb-2 pb-2 border-b border-gray-200">
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Layout</div>
-            <div><span className="text-[var(--color-ink-gray)]">displayMode:</span> <span className="font-semibold">{displayMode ?? 'undefined'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">maxHeight:</span> <span className="font-semibold">{maxHeight ?? 'undefined'}{maxHeight ? 'px' : ''}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">safeArea.top:</span> <span className="font-semibold">{safeArea?.insets?.top ?? 'N/A'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">safeArea.bottom:</span> <span className="font-semibold">{safeArea?.insets?.bottom ?? 'N/A'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">safeArea.left:</span> <span className="font-semibold">{safeArea?.insets?.left ?? 'N/A'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">safeArea.right:</span> <span className="font-semibold">{safeArea?.insets?.right ?? 'N/A'}</span></div>
-          </div>
-          
-          {/* Visual Properties */}
-          <div className="mb-2 pb-2 border-b border-gray-200">
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Visuals</div>
-            <div><span className="text-[var(--color-ink-gray)]">theme:</span> <span className="font-semibold">{theme ?? 'N/A'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">locale:</span> <span className="font-semibold">{locale ?? 'N/A'}</span></div>
-          </div>
-          
-          {/* Device Properties */}
-          <div className="mb-2 pb-2 border-b border-gray-200">
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Device</div>
-            <div><span className="text-[var(--color-ink-gray)]">type:</span> <span className="font-semibold">{userAgent?.device?.type ?? 'N/A'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">hover:</span> <span className="font-semibold">{userAgent?.capabilities?.hover ? '✓' : '✗'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">touch:</span> <span className="font-semibold">{userAgent?.capabilities?.touch ? '✓' : '✗'}</span></div>
-          </div>
-          
-          {/* State Properties */}
-          <div className="mb-2 pb-2 border-b border-gray-200">
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">State</div>
-            <div><span className="text-[var(--color-ink-gray)]">toolInput:</span> <span className="font-semibold">{toolInput ? '✓ present' : '✗ null'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">toolOutput:</span> <span className="font-semibold">{toolOutputFromHook ? '✓ present' : '✗ null'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">metadata:</span> <span className="font-semibold">{toolResponseMetadata ? '✓ present' : '✗ null'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">widgetState:</span> <span className="font-semibold">{state ? '✓ present' : '✗ null'}</span></div>
-          </div>
-          
-          {/* Data Summary */}
-          <div>
-            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Data</div>
-            <div><span className="text-[var(--color-ink-gray)]">courses:</span> <span className="font-semibold">{toolOutput?.courses?.length ?? 0}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">selectedCourse:</span> <span className="font-semibold">{state?.selectedCourseId ?? 'none'}</span></div>
-            <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
+          {/* Debug Info */}
+          <div className="px-3 py-2 text-xs text-black font-mono max-h-[70vh] overflow-y-auto">
+            <div className="font-bold mb-2 text-[var(--color-primary-red)] text-sm">SDK Debug Info</div>
+            
+            {/* Connection Status */}
+            <div className="mb-2 pb-2 border-b border-gray-200">
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Connection</div>
+              <div><span className="text-[var(--color-ink-gray)]">window.openai:</span> <span className="font-semibold">{hasOpenAI ? '✓ exists' : '✗ missing'}</span></div>
+            </div>
+            
+            {/* Layout Properties */}
+            <div className="mb-2 pb-2 border-b border-gray-200">
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Layout</div>
+              <div><span className="text-[var(--color-ink-gray)]">displayMode:</span> <span className="font-semibold">{displayMode ?? 'undefined'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">maxHeight:</span> <span className="font-semibold">{maxHeight ?? 'undefined'}{maxHeight ? 'px' : ''}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">safeArea.top:</span> <span className="font-semibold">{safeArea?.insets?.top ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">safeArea.bottom:</span> <span className="font-semibold">{safeArea?.insets?.bottom ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">safeArea.left:</span> <span className="font-semibold">{safeArea?.insets?.left ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">safeArea.right:</span> <span className="font-semibold">{safeArea?.insets?.right ?? 'N/A'}</span></div>
+            </div>
+            
+            {/* Visual Properties */}
+            <div className="mb-2 pb-2 border-b border-gray-200">
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Visuals</div>
+              <div><span className="text-[var(--color-ink-gray)]">theme:</span> <span className="font-semibold">{theme ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">locale:</span> <span className="font-semibold">{locale ?? 'N/A'}</span></div>
+            </div>
+            
+            {/* Device Properties */}
+            <div className="mb-2 pb-2 border-b border-gray-200">
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Device</div>
+              <div><span className="text-[var(--color-ink-gray)]">type:</span> <span className="font-semibold">{userAgent?.device?.type ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">hover:</span> <span className="font-semibold">{userAgent?.capabilities?.hover ? '✓' : '✗'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">touch:</span> <span className="font-semibold">{userAgent?.capabilities?.touch ? '✓' : '✗'}</span></div>
+            </div>
+            
+            {/* State Properties */}
+            <div className="mb-2 pb-2 border-b border-gray-200">
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">State</div>
+              <div><span className="text-[var(--color-ink-gray)]">toolInput:</span> <span className="font-semibold">{toolInput ? '✓ present' : '✗ null'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">toolOutput:</span> <span className="font-semibold">{toolOutputFromHook ? '✓ present' : '✗ null'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">metadata:</span> <span className="font-semibold">{toolResponseMetadata ? '✓ present' : '✗ null'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">widgetState:</span> <span className="font-semibold">{state ? '✓ present' : '✗ null'}</span></div>
+            </div>
+            
+            {/* Data Summary */}
+            <div>
+              <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Data</div>
+              <div><span className="text-[var(--color-ink-gray)]">courses:</span> <span className="font-semibold">{toolOutput?.courses?.length ?? 0}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">selectedCourse:</span> <span className="font-semibold">{state?.selectedCourseId ?? 'none'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
+            </div>
           </div>
         </div>
-        
-        <button
-          className="bg-white rounded-full border border-[var(--color-ui-line)] px-4 py-2 text-sm text-black font-medium shadow-lg hover:shadow-xl transition"
-          onClick={() => requestDisplayMode("fullscreen")}
-          aria-label="Enter fullscreen"
-        >
-          Fullscreen
-        </button>
       </div>
 
       {/* Bottom Course Cards */}
@@ -366,83 +370,118 @@ export default function GolfPage() {
         <div className="absolute bottom-0 left-0 right-0 z-10 pb-4">
           <div className="overflow-x-auto overflow-y-visible px-4 pb-2 scrollbar-hide">
             <div className="flex gap-3 min-w-min py-2">
-              {toolOutput.courses.map((c) => (
-                <button
-                  key={c.id}
-                  className={`flex-shrink-0 bg-white rounded-[20px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all hover:translate-y-[-2px] ${
-                    state?.selectedCourseId === c.id ? "ring-2 ring-[var(--color-accent-teal)]" : ""
-                  }`}
-                  style={{ width: `${cardWidth}px` }}
-                  onClick={() => onSelectCourse(c.id)}
-                >
-                  {/* Course Image */}
-                  <div 
-                    className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[20px]"
-                    style={{ height: `${cardImageHeight}px` }}
+              {toolOutput.courses.map((c) => {
+                const isSelected = state?.selectedCourseId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out ${
+                      isSelected 
+                        ? "ring-2 ring-[var(--color-accent-teal)] scale-105" 
+                        : "hover:translate-y-[-2px]"
+                    }`}
+                    style={{ 
+                      width: isSelected ? '360px' : '280px',
+                      transformOrigin: 'bottom center'
+                    }}
+                    onClick={() => onSelectCourse(c.id)}
                   >
-                    <img
-                      src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
-                      alt={c.name}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Distance Badge */}
-                    {typeof c.distance === "number" && (
-                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-black font-semibold">
-                        {c.distance} mi
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Course Info */}
-                  <div className="p-3 text-left" style={{ padding: cardWidth < 200 ? '12px' : '16px' }}>
-                    <h3 
-                      className="font-bold text-[var(--color-ink-black)] mb-1 line-clamp-1"
-                      style={{ fontSize: cardWidth < 200 ? '14px' : '16px' }}
-                    >
-                      {c.name}
-                    </h3>
-                    <p 
-                      className="text-[var(--color-ink-gray)] mb-2"
-                      style={{ fontSize: cardWidth < 200 ? '11px' : '12px' }}
-                    >
-                      {c.city}{c.state ? `, ${c.state}` : ""}
-                    </p>
-
-                    {/* Tags */}
-                    <div className="flex gap-1.5 mb-2" style={{ marginBottom: cardWidth < 200 ? '8px' : '12px' }}>
-                      {c.type && (
-                        <span 
-                          className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize"
-                          style={{ fontSize: cardWidth < 200 ? '10px' : '12px' }}
+                    {/* Compact Layout (Not Selected) */}
+                    {!isSelected ? (
+                      <div className="flex items-center gap-3 p-3">
+                        {/* Course Image */}
+                        <div 
+                          className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-[12px] flex-shrink-0"
+                          style={{ width: '80px', height: '80px' }}
                         >
-                          {c.type}
-                        </span>
-                      )}
-                      <span 
-                        className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium"
-                        style={{ fontSize: cardWidth < 200 ? '10px' : '12px' }}
-                      >
-                        18 holes
-                      </span>
-                    </div>
+                          <img
+                            src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
+                            alt={c.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
 
-                    {/* Action Button */}
-                    <button
-                      className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] font-medium hover:opacity-70 transition cursor-pointer"
-                      style={{ 
-                        padding: cardWidth < 200 ? '6px 12px' : '8px 16px',
-                        fontSize: cardWidth < 200 ? '12px' : '14px'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onBook();
-                      }}
-                    >
-                      Book Tee Time
-                    </button>
-                  </div>
-                </button>
-              ))}
+                        {/* Course Info */}
+                        <div className="flex-1 text-left min-w-0">
+                          <h3 className="font-bold text-[var(--color-ink-black)] text-sm mb-1 line-clamp-1">
+                            {c.name}
+                          </h3>
+                          <p className="text-[var(--color-ink-gray)] text-xs mb-2 line-clamp-1">
+                            {c.city}{c.state ? `, ${c.state}` : ""}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs">
+                            {typeof c.distance === "number" && (
+                              <span className="text-[var(--color-ink-gray)]">
+                                {c.distance} mi
+                              </span>
+                            )}
+                            {c.type && (
+                              <>
+                                <span className="text-[var(--color-ink-gray)]">•</span>
+                                <span className="text-[var(--color-ink-gray)] capitalize">{c.type}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Expanded Layout (Selected) */
+                      <>
+                        {/* Course Image */}
+                        <div 
+                          className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[16px]"
+                          style={{ height: '160px' }}
+                        >
+                          <img
+                            src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
+                            alt={c.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Distance Badge */}
+                          {typeof c.distance === "number" && (
+                            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-black font-semibold">
+                              {c.distance} mi
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Course Info */}
+                        <div className="p-4 text-left">
+                          <h3 className="font-bold text-[var(--color-ink-black)] text-lg mb-1 line-clamp-1">
+                            {c.name}
+                          </h3>
+                          <p className="text-[var(--color-ink-gray)] text-sm mb-3">
+                            {c.city}{c.state ? `, ${c.state}` : ""}
+                          </p>
+
+                          {/* Tags */}
+                          <div className="flex gap-2 mb-3">
+                            {c.type && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
+                                {c.type}
+                              </span>
+                            )}
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs">
+                              18 holes
+                            </span>
+                          </div>
+
+                          {/* Action Button */}
+                          <button
+                            className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-4 py-3 text-sm font-medium hover:opacity-90 transition cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onBook();
+                            }}
+                          >
+                            Book Tee Time
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
