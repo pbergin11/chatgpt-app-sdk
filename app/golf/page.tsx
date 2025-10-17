@@ -94,20 +94,39 @@ export default function GolfPage() {
         const totalAvailable = c.availability?.reduce((sum, day) =>
           sum + day.tee_times.filter(slot => slot.available).length, 0
         ) ?? 0;
-        const hasAvailability = matchedDate
-          ? (c.available_on_date ?? false)
-          : totalAvailable > 0;
+        const onDateAvailableSlots = matchedDate
+          ? (c.availability?.find(d => d.date === matchedDate)?.tee_times.filter(t => t.available).length ?? 0)
+          : undefined;
+        const hasAvailability = matchedDate ? (c.available_on_date ?? false) : totalAvailable > 0;
+        const availabilityScore = matchedDate ? (onDateAvailableSlots ?? 0) : totalAvailable;
         return {
           ...c,
           totalAvailable,
           hasAvailability,
+          onDateAvailableSlots,
+          availabilityScore,
         };
       });
   }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date]);
 
-  // Helper to keep marker color logic consistent across map and debug panel
-  const getMarkerColor = (c: { hasAvailability: boolean }) => {
-    return c.hasAvailability ? '#22c55e' /* green */ : '#ef4444' /* red */;
+  const maxAvailabilityScore = useMemo(() => {
+    const scores = (coursesWithAvailability ?? []).map((c: any) => c?.availabilityScore ?? 0);
+    const m = Math.max(0, ...scores);
+    return Number.isFinite(m) ? m : 0;
+  }, [coursesWithAvailability]);
+
+  const mix = (a: number, b: number, t: number) => Math.round(a + (b - a) * t);
+  const hexToRgb = (h: string) => ({ r: parseInt(h.slice(1, 3), 16), g: parseInt(h.slice(3, 5), 16), b: parseInt(h.slice(5, 7), 16) });
+  const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+  const colorBetween = (from: string, to: string, t: number) => {
+    const A = hexToRgb(from); const B = hexToRgb(to);
+    return rgbToHex(mix(A.r, B.r, t), mix(A.g, B.g, t), mix(A.b, B.b, t));
+  };
+  const getMarkerColor = (c: any) => {
+    const score = c?.availabilityScore ?? 0;
+    const max = maxAvailabilityScore || 0;
+    const t = max > 0 ? Math.min(1, Math.max(0, score / max)) : 0;
+    return colorBetween('#ef4444', '#22c55e', t);
   };
 
   // Track when courses are loaded
@@ -162,12 +181,35 @@ export default function GolfPage() {
     }
     mapboxgl.accessToken = token;
 
-    const map = new mapboxgl.Map({
+    // If we already have course points, start the map with their bounds so the first frame is correct
+    const initPts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
+    const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
+    const baseOptions: mapboxgl.MapboxOptions = {
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: state?.viewport?.center ?? [-117.1611, 32.7157],
-      zoom: state?.viewport?.zoom ?? 10,
-    });
+    };
+    const map = new mapboxgl.Map(
+      initPts.length > 0
+        ? {
+            ...baseOptions,
+            bounds:
+              initPts.length === 1
+                ? new mapboxgl.LngLatBounds(
+                    [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
+                    [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
+                  )
+                : initPts.reduce((b, p, i) => {
+                    if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
+                    return b.extend([p.lon!, p.lat!]);
+                  }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
+            fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
+          }
+        : {
+            ...baseOptions,
+            center: state?.viewport?.center ?? [-117.1611, 32.7157],
+            zoom: state?.viewport?.zoom ?? 10,
+          }
+    );
     mapRef.current = map;
 
     map.on("moveend", () => {
@@ -180,7 +222,9 @@ export default function GolfPage() {
     });
 
     map.on("load", () => {
-      // Map is ready, markers will be added via separate effect
+      // Ensure internal size is correct in case container changed
+      map.resize();
+      // Markers and bounds fitting are handled in separate effects (and also scheduled on load)
     });
 
     return () => {
@@ -192,78 +236,82 @@ export default function GolfPage() {
   // Add custom markers when courses change
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
-    // Remove existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    const addMarkers = () => {
+      // Remove existing markers
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
 
-    // Add new markers
-    coursesWithAvailability.forEach((course) => {
-      // Create custom marker element
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      
-      // Determine color based on availability (green when available, red when not)
-      const color = getMarkerColor(course);
-      
-      // Check if this is a highly available course (top 30% of available slots)
-      const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
-      const isHighlyAvailable = course.totalAvailable > maxAvailable * 0.7;
-      
-      // Create marker HTML with teardrop shape
-      el.innerHTML = `
-        <div style="
-          position: relative;
-          width: 30px;
-          height: 30px;
-          background-color: ${color};
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          cursor: pointer;
-          transition: transform 0.2s;
-        ">
-          ${isHighlyAvailable ? `
-            <div style="
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%) rotate(45deg);
-              color: white;
-              font-size: 14px;
-              font-weight: bold;
-            ">★</div>
-          ` : ''}
-        </div>
-      `;
-      
-      // Add hover effect
-      el.addEventListener('mouseenter', () => {
-        const markerDiv = el.querySelector('div') as HTMLElement;
-        if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1.2)';
+      // Add new markers
+      coursesWithAvailability.forEach((course) => {
+        // Create custom marker element
+        const el = document.createElement('div');
+        el.className = 'custom-marker';
+        
+        const color = getMarkerColor(course);
+        
+        // Check if this is a highly available course (top 30% of available slots)
+        const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
+        const isHighlyAvailable = course.totalAvailable > maxAvailable * 0.7;
+        
+        // Create marker HTML with teardrop shape
+        el.innerHTML = `
+          <div style="
+            position: relative;
+            width: 30px;
+            height: 30px;
+            background-color: ${color};
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+          ">
+            ${isHighlyAvailable ? `
+              <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+              ">★</div>
+            ` : ''}
+          </div>
+        `;
+        
+        // Add hover effect
+        el.addEventListener('mouseenter', () => {
+          const markerDiv = el.querySelector('div') as HTMLElement;
+          if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1.2)';
+        });
+        el.addEventListener('mouseleave', () => {
+          const markerDiv = el.querySelector('div') as HTMLElement;
+          if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1)';
+        });
+        
+        // Create marker
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([course.lon!, course.lat!])
+          .addTo(map);
+        
+        // Add click handler
+        el.addEventListener('click', () => {
+          setState((prev) => ({ 
+            ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), 
+            selectedCourseId: course.id 
+          }));
+        });
+        
+        markersRef.current.push(marker);
       });
-      el.addEventListener('mouseleave', () => {
-        const markerDiv = el.querySelector('div') as HTMLElement;
-        if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1)';
-      });
-      
-      // Create marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([course.lon!, course.lat!])
-        .addTo(map);
-      
-      // Add click handler
-      el.addEventListener('click', () => {
-        setState((prev) => ({ 
-          ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), 
-          selectedCourseId: course.id 
-        }));
-      });
-      
-      markersRef.current.push(marker);
-    });
+    };
+
+    if (map.isStyleLoaded()) addMarkers();
+    else map.once('load', addMarkers);
 
     // Cleanup function
     return () => {
@@ -274,19 +322,25 @@ export default function GolfPage() {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-    const pts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === "number" && typeof c.lat === "number");
-    if (pts.length === 0) return;
-    const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
-    if (pts.length === 1) {
-      const p = pts[0];
-      const bounds = new mapboxgl.LngLatBounds([p.lon! - 0.01, p.lat! - 0.01], [p.lon! + 0.01, p.lat! + 0.01]);
-      map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300 });
-      return;
-    }
-    let bounds = new mapboxgl.LngLatBounds([pts[0].lon!, pts[0].lat!], [pts[0].lon!, pts[0].lat!]);
-    for (let i = 1; i < pts.length; i++) bounds.extend([pts[i].lon!, pts[i].lat!]);
-    map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300, maxZoom: 13 });
+    if (!map) return;
+
+    const doFit = () => {
+      const pts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
+      if (pts.length === 0) return;
+      const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
+      if (pts.length === 1) {
+        const p = pts[0];
+        const bounds = new mapboxgl.LngLatBounds([p.lon! - 0.01, p.lat! - 0.01], [p.lon! + 0.01, p.lat! + 0.01]);
+        map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300 });
+        return;
+      }
+      let bounds = new mapboxgl.LngLatBounds([pts[0].lon!, pts[0].lat!], [pts[0].lon!, pts[0].lat!]);
+      for (let i = 1; i < pts.length; i++) bounds.extend([pts[i].lon!, pts[i].lat!]);
+      map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300, maxZoom: 13 });
+    };
+
+    if (map.isStyleLoaded()) doFit();
+    else map.once('load', doFit);
   }, [coursesWithAvailability, safeArea?.insets?.bottom]);
 
   const selectedCourse = useMemo(() => {
@@ -385,7 +439,7 @@ export default function GolfPage() {
               <div><span className="text-[var(--color-ink-gray)]">courses:</span> <span className="font-semibold">{toolOutput?.courses?.length ?? 0}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">selectedCourse:</span> <span className="font-semibold">{state?.selectedCourseId ?? 'none'}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
-              <div><span className="text-[var(--color-ink-gray)]">selectedCourseColor:</span> <span className="font-semibold">{selectedCourse ? getMarkerColor(selectedCourse) : 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">selectedCourseColor:</span> <span className="font-semibold">{selectedCourse ? getMarkerColor(selectedCourse as any) : 'N/A'}</span></div>
             </div>
           </div>
         </div>
