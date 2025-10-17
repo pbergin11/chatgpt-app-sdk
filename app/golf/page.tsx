@@ -11,6 +11,12 @@ import {
   useRequestDisplayMode,
   useCallTool,
   useUserAgent,
+  useTheme,
+  useLocale,
+  useSafeArea,
+  useToolInput,
+  useToolOutput,
+  useToolResponseMetadata,
 } from "../hooks";
 import BlocksWaveIcon from "./BlocksWaveIcon";
 
@@ -57,6 +63,15 @@ export default function GolfPage() {
   const requestDisplayMode = useRequestDisplayMode();
   const callTool = useCallTool();
   const userAgent = useUserAgent();
+  const theme = useTheme();
+  const locale = useLocale();
+  const safeArea = useSafeArea();
+  const toolInput = useToolInput();
+  const toolOutputFromHook = useToolOutput();
+  const toolResponseMetadata = useToolResponseMetadata();
+  
+  // Check if window.openai exists
+  const hasOpenAI = typeof window !== 'undefined' && !!(window as any).openai;
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [noToken, setNoToken] = useState(false);
@@ -282,7 +297,61 @@ export default function GolfPage() {
       </div>
 
       {/* Top Controls */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
+        {/* Debug Widget */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] px-3 py-2 text-xs text-black shadow-lg font-mono max-h-[80vh] overflow-y-auto">
+          <div className="font-bold mb-2 text-[var(--color-primary-red)] text-sm">SDK Debug Info</div>
+          
+          {/* Connection Status */}
+          <div className="mb-2 pb-2 border-b border-gray-200">
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Connection</div>
+            <div><span className="text-[var(--color-ink-gray)]">window.openai:</span> <span className="font-semibold">{hasOpenAI ? '✓ exists' : '✗ missing'}</span></div>
+          </div>
+          
+          {/* Layout Properties */}
+          <div className="mb-2 pb-2 border-b border-gray-200">
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Layout</div>
+            <div><span className="text-[var(--color-ink-gray)]">displayMode:</span> <span className="font-semibold">{displayMode ?? 'undefined'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">maxHeight:</span> <span className="font-semibold">{maxHeight ?? 'undefined'}{maxHeight ? 'px' : ''}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">safeArea.top:</span> <span className="font-semibold">{safeArea?.insets?.top ?? 'N/A'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">safeArea.bottom:</span> <span className="font-semibold">{safeArea?.insets?.bottom ?? 'N/A'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">safeArea.left:</span> <span className="font-semibold">{safeArea?.insets?.left ?? 'N/A'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">safeArea.right:</span> <span className="font-semibold">{safeArea?.insets?.right ?? 'N/A'}</span></div>
+          </div>
+          
+          {/* Visual Properties */}
+          <div className="mb-2 pb-2 border-b border-gray-200">
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Visuals</div>
+            <div><span className="text-[var(--color-ink-gray)]">theme:</span> <span className="font-semibold">{theme ?? 'N/A'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">locale:</span> <span className="font-semibold">{locale ?? 'N/A'}</span></div>
+          </div>
+          
+          {/* Device Properties */}
+          <div className="mb-2 pb-2 border-b border-gray-200">
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Device</div>
+            <div><span className="text-[var(--color-ink-gray)]">type:</span> <span className="font-semibold">{userAgent?.device?.type ?? 'N/A'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">hover:</span> <span className="font-semibold">{userAgent?.capabilities?.hover ? '✓' : '✗'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">touch:</span> <span className="font-semibold">{userAgent?.capabilities?.touch ? '✓' : '✗'}</span></div>
+          </div>
+          
+          {/* State Properties */}
+          <div className="mb-2 pb-2 border-b border-gray-200">
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">State</div>
+            <div><span className="text-[var(--color-ink-gray)]">toolInput:</span> <span className="font-semibold">{toolInput ? '✓ present' : '✗ null'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">toolOutput:</span> <span className="font-semibold">{toolOutputFromHook ? '✓ present' : '✗ null'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">metadata:</span> <span className="font-semibold">{toolResponseMetadata ? '✓ present' : '✗ null'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">widgetState:</span> <span className="font-semibold">{state ? '✓ present' : '✗ null'}</span></div>
+          </div>
+          
+          {/* Data Summary */}
+          <div>
+            <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Data</div>
+            <div><span className="text-[var(--color-ink-gray)]">courses:</span> <span className="font-semibold">{toolOutput?.courses?.length ?? 0}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">selectedCourse:</span> <span className="font-semibold">{state?.selectedCourseId ?? 'none'}</span></div>
+            <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
+          </div>
+        </div>
+        
         <button
           className="bg-white rounded-full border border-[var(--color-ui-line)] px-4 py-2 text-sm text-black font-medium shadow-lg hover:shadow-xl transition"
           onClick={() => requestDisplayMode("fullscreen")}
