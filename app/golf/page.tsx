@@ -105,6 +105,11 @@ export default function GolfPage() {
       });
   }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date]);
 
+  // Helper to keep marker color logic consistent across map and debug panel
+  const getMarkerColor = (c: { hasAvailability: boolean }) => {
+    return c.hasAvailability ? '#22c55e' /* green */ : '#ef4444' /* red */;
+  };
+
   // Track when courses are loaded
   useEffect(() => {
     if (toolOutput?.courses && toolOutput.courses.length > 0) {
@@ -199,11 +204,8 @@ export default function GolfPage() {
       const el = document.createElement('div');
       el.className = 'custom-marker';
       
-      // Determine color based on availability (grey if matching a specific date with no availability)
-      const matchedDate = toolOutput?.searchContext?.matched_date;
-      const color = matchedDate
-        ? (course.hasAvailability ? '#22c55e' : '#9CA3AF')
-        : (course.hasAvailability ? '#22c55e' : '#ef4444');
+      // Determine color based on availability (green when available, red when not)
+      const color = getMarkerColor(course);
       
       // Check if this is a highly available course (top 30% of available slots)
       const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
@@ -269,6 +271,23 @@ export default function GolfPage() {
       markersRef.current = [];
     };
   }, [coursesWithAvailability, setState]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const pts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === "number" && typeof c.lat === "number");
+    if (pts.length === 0) return;
+    const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
+    if (pts.length === 1) {
+      const p = pts[0];
+      const bounds = new mapboxgl.LngLatBounds([p.lon! - 0.01, p.lat! - 0.01], [p.lon! + 0.01, p.lat! + 0.01]);
+      map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300 });
+      return;
+    }
+    let bounds = new mapboxgl.LngLatBounds([pts[0].lon!, pts[0].lat!], [pts[0].lon!, pts[0].lat!]);
+    for (let i = 1; i < pts.length; i++) bounds.extend([pts[i].lon!, pts[i].lat!]);
+    map.fitBounds(bounds, { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, duration: 300, maxZoom: 13 });
+  }, [coursesWithAvailability, safeArea?.insets?.bottom]);
 
   const selectedCourse = useMemo(() => {
     const id = state?.selectedCourseId;
@@ -366,6 +385,7 @@ export default function GolfPage() {
               <div><span className="text-[var(--color-ink-gray)]">courses:</span> <span className="font-semibold">{toolOutput?.courses?.length ?? 0}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">selectedCourse:</span> <span className="font-semibold">{state?.selectedCourseId ?? 'none'}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
+              <div><span className="text-[var(--color-ink-gray)]">selectedCourseColor:</span> <span className="font-semibold">{selectedCourse ? getMarkerColor(selectedCourse) : 'N/A'}</span></div>
             </div>
           </div>
         </div>
@@ -501,7 +521,7 @@ export default function GolfPage() {
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
           <div className="bg-white rounded-[20px] px-6 py-4 shadow-lg text-center">
             <div className="flex items-center gap-3">
-              <BlocksWaveIcon size={32} color="var(--color-accent-teal)" />
+              <BlocksWaveIcon size={32} color="var(--color-ink-black)" />
               <p className="text-sm text-[var(--color-ink-gray)] font-medium">
                 Gathering Courses...
               </p>
