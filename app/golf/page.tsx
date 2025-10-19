@@ -125,18 +125,44 @@ export default function GolfPage() {
     return Number.isFinite(m) ? m : 0;
   }, [coursesWithAvailability]);
 
+  // Color spectrum: Green (high availability) → Yellow → Red (low availability)
+  const COLOR_SPECTRUM = [
+    '#69B34C', // Green - Very available
+    '#ACB334', // Yellow-green - Good availability
+    '#FAB733', // Yellow - Medium availability
+    '#FF8E15', // Orange - Low availability
+    '#FF4E11', // Red-orange - Very low availability
+    '#FF0D0D', // Red - Not available
+  ];
+
   const mix = (a: number, b: number, t: number) => Math.round(a + (b - a) * t);
   const hexToRgb = (h: string) => ({ r: parseInt(h.slice(1, 3), 16), g: parseInt(h.slice(3, 5), 16), b: parseInt(h.slice(5, 7), 16) });
   const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
-  const colorBetween = (from: string, to: string, t: number) => {
-    const A = hexToRgb(from); const B = hexToRgb(to);
-    return rgbToHex(mix(A.r, B.r, t), mix(A.g, B.g, t), mix(A.b, B.b, t));
-  };
+  
   const getMarkerColor = (c: any) => {
     const score = c?.availabilityScore ?? 0;
-    const max = maxAvailabilityScore || 0;
-    const t = max > 0 ? Math.min(1, Math.max(0, score / max)) : 0;
-    return colorBetween('#ef4444', '#22c55e', t);
+    const max = maxAvailabilityScore || 1;
+    
+    // Normalize score to 0-1 range (higher score = more available = greener)
+    const normalizedScore = max > 0 ? Math.min(1, Math.max(0, score / max)) : 0;
+    
+    // Map to color spectrum (0 = red, 1 = green)
+    const segmentCount = COLOR_SPECTRUM.length - 1;
+    const position = normalizedScore * segmentCount;
+    const segmentIndex = Math.min(Math.floor(position), segmentCount - 1);
+    const segmentT = position - segmentIndex;
+    
+    // Interpolate between two adjacent colors in the spectrum
+    // Note: We reverse the array so green is at the top (high scores)
+    const reversedSpectrum = [...COLOR_SPECTRUM].reverse();
+    const colorFrom = hexToRgb(reversedSpectrum[segmentIndex]);
+    const colorTo = hexToRgb(reversedSpectrum[segmentIndex + 1]);
+    
+    return rgbToHex(
+      mix(colorFrom.r, colorTo.r, segmentT),
+      mix(colorFrom.g, colorTo.g, segmentT),
+      mix(colorFrom.b, colorTo.b, segmentT)
+    );
   };
 
   // Track when courses are loaded
@@ -269,8 +295,8 @@ export default function GolfPage() {
         el.innerHTML = `
           <div style="
             position: relative;
-            width: 30px;
-            height: 30px;
+            width: 15px;
+            height: 15px;
             background-color: ${color};
             border-radius: 50% 50% 50% 0;
             transform: rotate(-45deg);

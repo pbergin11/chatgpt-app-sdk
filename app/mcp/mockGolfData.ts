@@ -96,7 +96,7 @@ export interface GolfCourse {
 }
 
 // Helper function to generate tee times for a day
-function generateTeeTimes(date: string, basePrice: number, availabilityLevel: "high" | "medium" | "low"): TeeTime[] {
+function generateTeeTimes(date: string, basePrice: number, availabilityLevel: "very-high" | "high" | "medium" | "low" | "very-low" | "none"): TeeTime[] {
   const times: TeeTime[] = [];
   const dayOfWeek = new Date(date).getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -111,14 +111,20 @@ function generateTeeTimes(date: string, basePrice: number, availabilityLevel: "h
       let price = isWeekend ? basePrice * 1.3 : basePrice;
       if (isTwilight) price *= 0.7;
       
-      // Determine availability based on level
+      // Determine availability based on level - wider range for better color spectrum
       let available = true;
-      if (availabilityLevel === "low") {
-        available = Math.random() > 0.7; // 30% available
+      if (availabilityLevel === "none") {
+        available = Math.random() > 0.95; // 5% available
+      } else if (availabilityLevel === "very-low") {
+        available = Math.random() > 0.80; // 20% available
+      } else if (availabilityLevel === "low") {
+        available = Math.random() > 0.65; // 35% available
       } else if (availabilityLevel === "medium") {
-        available = Math.random() > 0.4; // 60% available
+        available = Math.random() > 0.45; // 55% available
+      } else if (availabilityLevel === "high") {
+        available = Math.random() > 0.25; // 75% available
       } else {
-        available = Math.random() > 0.1; // 90% available
+        available = Math.random() > 0.05; // 95% available (very-high)
       }
 
       times.push({
@@ -134,7 +140,7 @@ function generateTeeTimes(date: string, basePrice: number, availabilityLevel: "h
 }
 
 // Helper to generate 7 days of availability
-function generateAvailability(basePrice: number, availabilityLevel: "high" | "medium" | "low"): DailyAvailability[] {
+function generateAvailability(basePrice: number, availabilityLevel: "very-high" | "high" | "medium" | "low" | "very-low" | "none"): DailyAvailability[] {
   const availability: DailyAvailability[] = [];
   const today = new Date();
   
@@ -196,7 +202,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "twilight", base_price: 176, description: "After 3 PM" },
     ],
     average_price: 252,
-    availability: generateAvailability(252, "low"),
+    availability: generateAvailability(252, "very-low"),
     phone: "+1 (858) 452-3226",
     email: "info@torreypinesgolfcourse.com",
     website: "https://www.sandiego.gov/park-and-recreation/golf/torreypines",
@@ -247,7 +253,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "senior", base_price: 46, description: "62+ weekdays" },
     ],
     average_price: 58,
-    availability: generateAvailability(58, "high"),
+    availability: generateAvailability(58, "very-high"),
     phone: "+1 (619) 235-1184",
     email: "info@balboaparkgolf.com",
     website: "https://www.sandiego.gov/park-and-recreation/golf/balboapark",
@@ -297,7 +303,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "twilight", base_price: 46, description: "After 2 PM" },
     ],
     average_price: 65,
-    availability: generateAvailability(65, "medium"),
+    availability: generateAvailability(65, "high"),
     phone: "+1 (619) 435-3121",
     email: "info@coronadogolf.com",
     website: "https://www.golfcoronado.com",
@@ -347,7 +353,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "twilight", base_price: 195, description: "After 2 PM" },
     ],
     average_price: 295,
-    availability: generateAvailability(295, "medium"),
+    availability: generateAvailability(295, "low"),
     phone: "+1 (760) 603-6900",
     email: "golf@aviaragolf.com",
     website: "https://www.aviaragolf.com",
@@ -449,7 +455,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "summer", base_price: 89, description: "Jun-Oct" },
     ],
     average_price: 203,
-    availability: generateAvailability(203, "low"),
+    availability: generateAvailability(203, "none"),
     phone: "+1 (480) 585-7700",
     email: "info@troonnorthgolf.com",
     website: "https://www.troonnorthgolf.com",
@@ -499,7 +505,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "summer", base_price: 79, description: "Jun-Oct" },
     ],
     average_price: 179,
-    availability: generateAvailability(179, "medium"),
+    availability: generateAvailability(179, "high"),
     phone: "+1 (480) 502-1800",
     email: "info@grayhawkgolf.com",
     website: "https://www.grayhawkgolf.com",
@@ -551,7 +557,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "twilight", base_price: 125, description: "After 2 PM" },
     ],
     average_price: 195,
-    availability: generateAvailability(195, "high"),
+    availability: generateAvailability(195, "very-high"),
     phone: "+1 (305) 361-9129",
     email: "info@crandongolf.com",
     website: "https://www.crandongolf.com",
@@ -600,7 +606,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "member_guest", base_price: 350, description: "Members only" },
     ],
     average_price: 350,
-    availability: generateAvailability(350, "low"),
+    availability: generateAvailability(350, "very-low"),
     phone: "+44 1344 842201",
     email: "info@wentworthclub.com",
     website: "https://www.wentworthclub.com",
@@ -650,7 +656,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
       { name: "member_guest", base_price: 450, description: "Members only" },
     ],
     average_price: 450,
-    availability: generateAvailability(450, "low"),
+    availability: generateAvailability(450, "none"),
     phone: "+61 2 9661 4455",
     email: "info@nswgolfclub.com.au",
     website: "https://www.nswgolfclub.com.au",
