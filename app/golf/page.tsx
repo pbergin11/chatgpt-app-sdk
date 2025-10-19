@@ -89,6 +89,7 @@ export default function GolfPage() {
   const [noToken, setNoToken] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -390,21 +391,47 @@ export default function GolfPage() {
       </div>
 
       {/* Top Controls */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-stretch w-[280px] pointer-events-none">
-        {/* Debug Widget */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg pointer-events-auto">
-          {/* Display Mode Toggle Button at Top */}
-          <button
-            className="w-full bg-[var(--color-primary-red)] text-white rounded-t-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition"
-            onClick={() => requestDisplayMode(displayMode === "fullscreen" ? "inline" : "fullscreen")}
-            aria-label={displayMode === "fullscreen" ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {displayMode === "fullscreen" ? "Inline" : "Fullscreen"}
-          </button>
-          
-          {/* Debug Info */}
-          <div className="px-3 py-2 text-xs text-black font-mono max-h-[70vh] overflow-y-auto">
-            <div className="font-bold mb-2 text-[var(--color-primary-red)] text-sm">SDK Debug Info</div>
+      <div className="absolute top-4 right-4 z-10 flex gap-2 items-start pointer-events-none">
+        {/* Expand/Contract Button */}
+        <button
+          className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg p-2.5 hover:bg-white transition-all pointer-events-auto group"
+          onClick={() => requestDisplayMode(displayMode === "fullscreen" ? "inline" : "fullscreen")}
+          aria-label={displayMode === "fullscreen" ? "Exit fullscreen" : "Enter fullscreen"}
+          title={displayMode === "fullscreen" ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {displayMode === "fullscreen" ? (
+            // Contract icon (minimize)
+            <svg className="w-5 h-5 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+            </svg>
+          ) : (
+            // Expand icon (maximize)
+            <svg className="w-5 h-5 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+            </svg>
+          )}
+        </button>
+
+        {/* Info Button */}
+        <button
+          className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg p-2.5 hover:bg-white transition-all pointer-events-auto group"
+          onClick={() => setShowDebugInfo(!showDebugInfo)}
+          aria-label="Toggle debug info"
+          title="Toggle debug info"
+        >
+          <svg className="w-5 h-5 text-[var(--color-ink-black)] group-hover:text-[var(--color-accent-teal)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Debug Info Panel */}
+      {showDebugInfo && (
+        <div className="absolute top-16 right-4 z-10 w-[280px] pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg pointer-events-auto">
+            {/* Debug Info */}
+            <div className="px-3 py-2 text-xs text-black font-mono max-h-[70vh] overflow-y-auto">
+              <div className="font-bold mb-2 text-[var(--color-primary-red)] text-sm">SDK Debug Info</div>
             
             {/* Connection Status */}
             <div className="mb-2 pb-2 border-b border-gray-200">
@@ -455,9 +482,10 @@ export default function GolfPage() {
               <div><span className="text-[var(--color-ink-gray)]">viewport.zoom:</span> <span className="font-semibold">{state?.viewport?.zoom?.toFixed(2) ?? 'N/A'}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">selectedCourseColor:</span> <span className="font-semibold">{selectedCourse ? getMarkerColor(selectedCourse as any) : 'N/A'}</span></div>
             </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Bottom Course Cards */}
       {coursesWithAvailability?.length ? (
