@@ -473,12 +473,13 @@ export default function GolfPage() {
               {/* Simple Date Picker Dropdown */}
               {showDatePicker && (
                 <div 
-                  className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl overflow-hidden min-w-[240px]"
+                  className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl min-w-[240px]"
                   style={{ 
-                    maxHeight: displayMode === 'inline' ? '200px' : '300px'
+                    maxHeight: displayMode === 'inline' ? '200px' : '300px',
+                    overflowY: 'auto'
                   }}
                 >
-                  <div className="overflow-y-auto h-full p-2 space-y-1">
+                  <div className="p-2 space-y-1">
                     {/* Next 14 days */}
                     {Array.from({ length: 14 }, (_, i) => {
                       const date = new Date();
@@ -497,7 +498,7 @@ export default function GolfPage() {
                             setShowDatePicker(false);
                           }}
                         >
-                          <div className="font-medium">
+                          <div className="text-sm">
                             {i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'long' })}
                           </div>
                           <div className="text-xs opacity-75">
