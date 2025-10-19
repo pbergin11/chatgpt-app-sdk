@@ -49,6 +49,7 @@ export interface GolfCourse {
   slope: number; // Slope rating
   designer: string;
   year_built: number;
+  verified?: boolean; // Golf.AI Verified badge
   local_rules?: string;
   practice?: {
     range_available: boolean;
@@ -179,6 +180,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
     slope: 142,
     designer: "William P. Bell, Rees Jones",
     year_built: 1957,
+    verified: true,
     amenities: {
       spa: false,
       putting_green: true,
@@ -229,6 +231,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
     slope: 117,
     designer: "William P. Bell",
     year_built: 1915,
+    verified: true,
     amenities: {
       spa: false,
       putting_green: true,
@@ -330,6 +333,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
     slope: 138,
     designer: "Arnold Palmer",
     year_built: 1991,
+    verified: true,
     amenities: {
       spa: true,
       putting_green: true,
@@ -380,6 +384,7 @@ export const MOCK_GOLF_COURSES: GolfCourse[] = [
     slope: 141,
     designer: "Johnny Miller, Robert Muir Graves",
     year_built: 1999,
+    verified: true,
     amenities: {
       spa: false,
       putting_green: true,

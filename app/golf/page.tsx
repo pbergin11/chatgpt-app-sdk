@@ -453,7 +453,7 @@ export default function GolfPage() {
       {/* Date Picker & Legend - Top Left */}
       {coursesWithAvailability?.length > 0 && (
         <div 
-          className="absolute top-4 left-4 z-10 pointer-events-auto date-picker-container"
+          className="absolute top-4 left-4 z-10 pointer-events-auto date-picker-container flex gap-2"
           onMouseEnter={() => setShowLegend(true)}
           onMouseLeave={() => setShowLegend(false)}
         >
@@ -472,10 +472,15 @@ export default function GolfPage() {
               
               {/* Simple Date Picker Dropdown */}
               {showDatePicker && (
-                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl p-3 min-w-[280px]">
-                  <div className="space-y-2">
-                    {/* Next 7 days */}
-                    {Array.from({ length: 7 }, (_, i) => {
+                <div 
+                  className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl overflow-hidden min-w-[240px]"
+                  style={{ 
+                    maxHeight: displayMode === 'inline' ? '200px' : '300px'
+                  }}
+                >
+                  <div className="overflow-y-auto h-full p-2 space-y-1">
+                    {/* Next 14 days */}
+                    {Array.from({ length: 14 }, (_, i) => {
                       const date = new Date();
                       date.setDate(date.getDate() + i);
                       const isSelected = selectedDate?.toDateString() === date.toDateString();
@@ -501,40 +506,30 @@ export default function GolfPage() {
                         </button>
                       );
                     })}
-                    {selectedDate && (
-                      <button
-                        className="w-full text-left px-3 py-2 rounded-md text-sm text-[var(--color-ink-gray)] hover:bg-gray-100 transition-colors border-t border-gray-200 mt-2 pt-3"
-                        onClick={() => {
-                          setSelectedDate(null);
-                          setShowDatePicker(false);
-                        }}
-                      >
-                        Clear Selection
-                      </button>
-                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Availability Legend - Shows on hover */}
+          {/* Availability Legend - Shows on hover, same height as date picker button */}
           <div 
-            className={`mt-2 bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden transition-all duration-300 ease-out ${
-              showLegend ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+            className={`bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden transition-all duration-300 ease-out ${
+              showLegend ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0'
             }`}
+            style={{ height: '42px' }}
           >
-            <div className="p-3">
-              <div className="text-xs font-semibold text-[var(--color-ink-black)] mb-2">Availability</div>
-              <div className="space-y-2">
+            <div className="flex items-center gap-3 px-3 h-full whitespace-nowrap">
+              <div className="text-[10px] font-semibold text-[var(--color-ink-black)]">Availability</div>
+              <div className="flex-1 min-w-[100px]">
                 {/* Color gradient bar */}
-                <div className="h-3 rounded-full" style={{
+                <div className="h-2 rounded-full mb-1" style={{
                   background: 'linear-gradient(to right, #FF0D0D, #FF4E11, #FF8E15, #FAB733, #ACB334, #69B34C)'
                 }}></div>
                 {/* Labels */}
-                <div className="flex justify-between text-[10px] text-[var(--color-ink-gray)]">
+                <div className="flex justify-between text-[9px] text-[var(--color-ink-gray)]">
                   <span>Booked</span>
-                  <span>Available Tee Times</span>
+                  <span>Available</span>
                 </div>
               </div>
             </div>
@@ -686,6 +681,14 @@ export default function GolfPage() {
                             alt={c.name}
                             className="w-full h-full object-cover"
                           />
+                          {/* Verified Badge - Bottom Right */}
+                          {c.verified && (
+                            <img
+                              src="/verfied_badge.png"
+                              alt="Golf.AI Verified"
+                              className="absolute bottom-1 right-1 w-6 h-6"
+                            />
+                          )}
                         </div>
 
                         {/* Course Info */}
@@ -724,9 +727,17 @@ export default function GolfPage() {
                             alt={c.name}
                             className="w-full h-full object-cover"
                           />
-                          {/* Close Button */}
+                          {/* Verified Badge - Top Left */}
+                          {c.verified && (
+                            <img
+                              src="/verfied_badge.png"
+                              alt="Golf.AI Verified"
+                              className="absolute top-2 left-2 w-12 h-12"
+                            />
+                          )}
+                          {/* Close Button - Top Right */}
                           <button
-                            className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all group"
+                            className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all group"
                             onClick={(e) => {
                               e.stopPropagation();
                               onSelectCourse(c.id); // Deselect
@@ -737,9 +748,11 @@ export default function GolfPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </button>
-                          {/* Distance Badge */}
+                          {/* Distance Badge - Moved down if verified badge present */}
                           {typeof c.distance === "number" && (
-                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold">
+                            <div className={`absolute bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold ${
+                              c.verified ? 'top-16 left-2' : 'top-2 right-2'
+                            }`}>
                               {c.distance} mi
                             </div>
                           )}
