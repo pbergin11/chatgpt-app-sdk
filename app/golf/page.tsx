@@ -67,14 +67,13 @@ export default function GolfPage() {
   const callTool = useCallTool();
   const userAgent = useUserAgent();
   
-  // Cap maxHeight at 750px for mobile inline mode to prevent infinite growth
+  // Cap maxHeight at 750px for inline mode (both mobile and desktop) to prevent infinite growth
   const maxHeight = useMemo(() => {
-    const isMobile = userAgent?.device?.type === 'mobile';
-    if (isMobile && displayMode === 'inline' && rawMaxHeight) {
+    if (displayMode === 'inline' && rawMaxHeight) {
       return Math.min(rawMaxHeight, 750);
     }
     return rawMaxHeight;
-  }, [rawMaxHeight, displayMode, userAgent?.device?.type]);
+  }, [rawMaxHeight, displayMode]);
   const theme = useTheme();
   const locale = useLocale();
   const safeArea = useSafeArea();
@@ -90,25 +89,33 @@ export default function GolfPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const courseCardRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Calculate availability for each course
   const coursesWithAvailability = useMemo(() => {
-    const matchedDate = toolOutput?.searchContext?.matched_date ?? undefined;
+    // Use selected date from date picker, or fall back to search context date
+    const dateToUse = selectedDate 
+      ? selectedDate.toISOString().split('T')[0] 
+      : (toolOutput?.searchContext?.matched_date ?? undefined);
+    
     return (toolOutput?.courses ?? [])
       .filter((c) => typeof c.lon === "number" && typeof c.lat === "number")
       .map((c) => {
         const totalAvailable = c.availability?.reduce((sum, day) =>
           sum + day.tee_times.filter(slot => slot.available).length, 0
         ) ?? 0;
-        const onDateAvailableSlots = matchedDate
-          ? (c.availability?.find(d => d.date === matchedDate)?.tee_times.filter(t => t.available).length ?? 0)
+        const onDateAvailableSlots = dateToUse
+          ? (c.availability?.find(d => d.date === dateToUse)?.tee_times.filter(t => t.available).length ?? 0)
           : undefined;
-        const hasAvailability = matchedDate ? (c.available_on_date ?? false) : totalAvailable > 0;
-        const availabilityScore = matchedDate ? (onDateAvailableSlots ?? 0) : totalAvailable;
+        const hasAvailability = dateToUse ? (onDateAvailableSlots ?? 0) > 0 : totalAvailable > 0;
+        const availabilityScore = dateToUse ? (onDateAvailableSlots ?? 0) : totalAvailable;
         return {
           ...c,
           totalAvailable,
@@ -117,7 +124,7 @@ export default function GolfPage() {
           availabilityScore,
         };
       });
-  }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date]);
+  }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date, selectedDate]);
 
   const maxAvailabilityScore = useMemo(() => {
     const scores = (coursesWithAvailability ?? []).map((c: any) => c?.availabilityScore ?? 0);
@@ -295,8 +302,8 @@ export default function GolfPage() {
         el.innerHTML = `
           <div style="
             position: relative;
-            width: 15px;
-            height: 15px;
+            width: 25px;
+            height: 25px;
             background-color: ${color};
             border-radius: 50% 50% 50% 0;
             transform: rotate(-45deg);
@@ -395,6 +402,33 @@ export default function GolfPage() {
     }
   };
 
+  // Scroll to selected course card when selection changes
+  useEffect(() => {
+    if (state?.selectedCourseId) {
+      const cardElement = courseCardRefs.current.get(state.selectedCourseId);
+      if (cardElement) {
+        cardElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+  }, [state?.selectedCourseId]);
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showDatePicker && !target.closest('.date-picker-container')) {
+        setShowDatePicker(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
+
   const onBook = async () => {
     if (!state?.selectedCourseId) return;
     await callTool?.("book_tee_time", { courseId: state.selectedCourseId });
@@ -415,6 +449,98 @@ export default function GolfPage() {
           <div ref={mapContainer} className="h-full w-full" />
         )}
       </div>
+
+      {/* Date Picker & Legend - Top Left */}
+      {coursesWithAvailability?.length > 0 && (
+        <div 
+          className="absolute top-4 left-4 z-10 pointer-events-auto date-picker-container"
+          onMouseEnter={() => setShowLegend(true)}
+          onMouseLeave={() => setShowLegend(false)}
+        >
+          {/* Date Picker */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg">
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-ink-black)] hover:bg-gray-50 rounded-lg transition-colors w-full"
+                onClick={() => setShowDatePicker(!showDatePicker)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{selectedDate ? selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select Date'}</span>
+              </button>
+              
+              {/* Simple Date Picker Dropdown */}
+              {showDatePicker && (
+                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl p-3 min-w-[280px]">
+                  <div className="space-y-2">
+                    {/* Next 7 days */}
+                    {Array.from({ length: 7 }, (_, i) => {
+                      const date = new Date();
+                      date.setDate(date.getDate() + i);
+                      const isSelected = selectedDate?.toDateString() === date.toDateString();
+                      return (
+                        <button
+                          key={i}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                            isSelected 
+                              ? 'bg-[var(--color-primary-red)] text-white' 
+                              : 'hover:bg-gray-100 text-[var(--color-ink-black)]'
+                          }`}
+                          onClick={() => {
+                            setSelectedDate(date);
+                            setShowDatePicker(false);
+                          }}
+                        >
+                          <div className="font-medium">
+                            {i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : date.toLocaleDateString('en-US', { weekday: 'long' })}
+                          </div>
+                          <div className="text-xs opacity-75">
+                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {selectedDate && (
+                      <button
+                        className="w-full text-left px-3 py-2 rounded-md text-sm text-[var(--color-ink-gray)] hover:bg-gray-100 transition-colors border-t border-gray-200 mt-2 pt-3"
+                        onClick={() => {
+                          setSelectedDate(null);
+                          setShowDatePicker(false);
+                        }}
+                      >
+                        Clear Selection
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Availability Legend - Shows on hover */}
+          <div 
+            className={`mt-2 bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden transition-all duration-300 ease-out ${
+              showLegend ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="p-3">
+              <div className="text-xs font-semibold text-[var(--color-ink-black)] mb-2">Availability</div>
+              <div className="space-y-2">
+                {/* Color gradient bar */}
+                <div className="h-3 rounded-full" style={{
+                  background: 'linear-gradient(to right, #FF0D0D, #FF4E11, #FF8E15, #FAB733, #ACB334, #69B34C)'
+                }}></div>
+                {/* Labels */}
+                <div className="flex justify-between text-[10px] text-[var(--color-ink-gray)]">
+                  <span>Booked</span>
+                  <span>Available Tee Times</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Top Controls */}
       <div className="absolute top-4 right-4 z-10 flex gap-2 items-start pointer-events-none">
@@ -529,16 +655,23 @@ export default function GolfPage() {
                 return (
                   <button
                     key={c.id}
+                    ref={(el) => {
+                      if (el) {
+                        courseCardRefs.current.set(c.id, el);
+                      } else {
+                        courseCardRefs.current.delete(c.id);
+                      }
+                    }}
                     className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out ${
                       isSelected 
                         ? "" 
                         : "hover:translate-y-[-2px]"
                     } ${dimForNoAvail ? "opacity-60" : ""}`}
                     style={{ 
-                      width: isSelected ? '320px' : '280px',
+                      width: isSelected ? (displayMode === 'inline' ? '280px' : '320px') : '280px',
                       transformOrigin: 'bottom center'
                     }}
-                    onClick={() => onSelectCourse(c.id)}
+                    onClick={() => !isSelected && onSelectCourse(c.id)}
                   >
                     {/* Compact Layout (Not Selected) */}
                     {!isSelected ? (
@@ -584,13 +717,26 @@ export default function GolfPage() {
                         {/* Course Image */}
                         <div 
                           className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[16px]"
-                          style={{ height: '120px' }}
+                          style={{ height: displayMode === 'inline' ? '100px' : '120px' }}
                         >
                           <img
                             src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
                             alt={c.name}
                             className="w-full h-full object-cover"
                           />
+                          {/* Close Button */}
+                          <button
+                            className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectCourse(c.id); // Deselect
+                            }}
+                            aria-label="Close"
+                          >
+                            <svg className="w-4 h-4 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
                           {/* Distance Badge */}
                           {typeof c.distance === "number" && (
                             <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold">
@@ -600,8 +746,8 @@ export default function GolfPage() {
                         </div>
 
                         {/* Course Info */}
-                        <div className="p-3 text-left">
-                          <h3 className="font-bold text-[var(--color-ink-black)] text-base mb-1 line-clamp-1">
+                        <div className={displayMode === 'inline' ? 'p-2.5 text-left' : 'p-3 text-left'}>
+                          <h3 className={`font-bold text-[var(--color-ink-black)] mb-1 line-clamp-1 ${displayMode === 'inline' ? 'text-sm' : 'text-base'}`}>
                             {c.name}
                           </h3>
                           <p className="text-[var(--color-ink-gray)] text-xs mb-2">
@@ -609,7 +755,7 @@ export default function GolfPage() {
                           </p>
 
                           {/* Tags */}
-                          <div className="flex gap-1.5 mb-2">
+                          <div className={`flex gap-1.5 ${displayMode === 'inline' ? 'mb-1.5' : 'mb-2'}`}>
                             {c.type && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
                                 {c.type}
@@ -622,7 +768,7 @@ export default function GolfPage() {
 
                           {/* Action Button */}
                           <button
-                            className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] px-3 py-2 text-sm font-medium hover:opacity-90 transition cursor-pointer"
+                            className={`w-full bg-[var(--color-primary-red)] text-white rounded-[8px] font-medium hover:opacity-90 transition cursor-pointer ${displayMode === 'inline' ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               onBook();
