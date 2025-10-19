@@ -106,13 +106,13 @@ export default function GolfPage() {
       : (toolOutput?.searchContext?.matched_date ?? undefined);
     
     return (toolOutput?.courses ?? [])
-      .filter((c) => typeof c.lon === "number" && typeof c.lat === "number")
-      .map((c) => {
-        const totalAvailable = c.availability?.reduce((sum, day) =>
-          sum + day.tee_times.filter(slot => slot.available).length, 0
+      .filter((c: any) => typeof c.lon === "number" && typeof c.lat === "number")
+      .map((c: any) => {
+        const totalAvailable = c.availability?.reduce((sum: number, day: any) =>
+          sum + day.tee_times.filter((slot: any) => slot.available).length, 0
         ) ?? 0;
         const onDateAvailableSlots = dateToUse
-          ? (c.availability?.find(d => d.date === dateToUse)?.tee_times.filter(t => t.available).length ?? 0)
+          ? (c.availability?.find((d: any) => d.date === dateToUse)?.tee_times.filter((t: any) => t.available).length ?? 0)
           : undefined;
         const hasAvailability = dateToUse ? (onDateAvailableSlots ?? 0) > 0 : totalAvailable > 0;
         const availabilityScore = dateToUse ? (onDateAvailableSlots ?? 0) : totalAvailable;
