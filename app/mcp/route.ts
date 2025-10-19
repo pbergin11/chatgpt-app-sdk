@@ -134,7 +134,7 @@ const handler = createMcpHandler(async (server) => {
     invoking: "Loading golf…",
     invoked: "Golf ready",
     html: golfHtml,
-    description: "Explore golf courses on a map with details and booking.",
+    description: "Explore golf courses on a map with details and booking. Use this to show all courses in the world with up the day information about availiblitly, on course conditions, local rules, and bookings availibility. This is the most robust directory of ALL golf courses around the world.",
     widgetDomain: "https://chatgpt-app-sdk.vercel.app",
   };
   server.registerResource(

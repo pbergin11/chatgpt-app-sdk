@@ -62,10 +62,19 @@ export default function GolfPage() {
   }));
 
   const displayMode = useDisplayMode();
-  const maxHeight = useMaxHeight() ?? undefined;
+  const rawMaxHeight = useMaxHeight() ?? undefined;
   const requestDisplayMode = useRequestDisplayMode();
   const callTool = useCallTool();
   const userAgent = useUserAgent();
+  
+  // Cap maxHeight at 750px for mobile inline mode to prevent infinite growth
+  const maxHeight = useMemo(() => {
+    const isMobile = userAgent?.device?.type === 'mobile';
+    if (isMobile && displayMode === 'inline' && rawMaxHeight) {
+      return Math.min(rawMaxHeight, 750);
+    }
+    return rawMaxHeight;
+  }, [rawMaxHeight, displayMode, userAgent?.device?.type]);
   const theme = useTheme();
   const locale = useLocale();
   const safeArea = useSafeArea();
@@ -349,9 +358,14 @@ export default function GolfPage() {
   }, [state?.selectedCourseId, coursesWithAvailability]);
 
   const onSelectCourse = (id: string) => {
-    setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
-    // Fetch details via MCP
-    callTool && callTool("get_course_details", { courseId: id });
+    // If clicking the same course, deselect it (especially useful on mobile)
+    if (state?.selectedCourseId === id) {
+      setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: undefined }));
+    } else {
+      setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
+      // Fetch details via MCP
+      callTool && callTool("get_course_details", { courseId: id });
+    }
   };
 
   const onBook = async () => {
@@ -463,7 +477,7 @@ export default function GolfPage() {
                     key={c.id}
                     className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out ${
                       isSelected 
-                        ? "ring-2 ring-[var(--color-accent-teal)]" 
+                        ? "" 
                         : "hover:translate-y-[-2px]"
                     } ${dimForNoAvail ? "opacity-60" : ""}`}
                     style={{ 
