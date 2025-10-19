@@ -105,7 +105,14 @@ export default function GolfPage() {
       ? selectedDate.toISOString().split('T')[0] 
       : (toolOutput?.searchContext?.matched_date ?? undefined);
     
-    return (toolOutput?.courses ?? [])
+    // Handle both search_courses (returns courses array) and get_course_details (returns single course)
+    const coursesArray = toolOutput?.courses 
+      ? toolOutput.courses 
+      : toolOutput?.course 
+        ? [toolOutput.course] 
+        : [];
+    
+    return coursesArray
       .filter((c: any) => typeof c.lon === "number" && typeof c.lat === "number")
       .map((c: any) => {
         const totalAvailable = c.availability?.reduce((sum: number, day: any) =>
@@ -124,7 +131,7 @@ export default function GolfPage() {
           availabilityScore,
         };
       });
-  }, [toolOutput?.courses, toolOutput?.searchContext?.matched_date, selectedDate]);
+  }, [toolOutput?.courses, toolOutput?.course, toolOutput?.searchContext?.matched_date, selectedDate]);
 
   const maxAvailabilityScore = useMemo(() => {
     const scores = (coursesWithAvailability ?? []).map((c: any) => c?.availabilityScore ?? 0);
@@ -521,7 +528,7 @@ export default function GolfPage() {
             style={{ height: '42px' }}
           >
             <div className="flex items-center gap-3 px-3 h-full whitespace-nowrap">
-              <div className="text-[10px] font-semibold text-[var(--color-ink-black)]">Availability</div>
+              <div className="text-[14px] font-bold text-[var(--color-ink-black)]">Availability</div>
               <div className="flex-1 min-w-[100px]">
                 {/* Color gradient bar */}
                 <div className="h-2 rounded-full mb-1" style={{
