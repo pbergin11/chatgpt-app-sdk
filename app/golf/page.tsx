@@ -26,10 +26,12 @@ type CoursePoint = {
   name: string;
   city?: string;
   state?: string;
-  type?: string;
+  country?: string;
+  lon: number;
+  lat: number;
+  type?: "public" | "private" | "semi-private" | "resort";
+  verified?: boolean;
   distance?: number;
-  lon?: number;
-  lat?: number;
   availability?: Array<{
     date: string;
     tee_times: Array<{
@@ -50,11 +52,97 @@ type GolfWidgetState = {
 };
 
 export default function GolfPage() {
-  const toolOutput = useWidgetProps<{
+  const toolOutputRaw = useWidgetProps<{
     courses?: CoursePoint[];
     course?: { id: string; name: string; description?: string };
     searchContext?: { matched_date?: string | null };
   }>();
+
+  // For local debugging: Load California courses if no tool output
+  const toolOutput = useMemo(() => {
+    if (toolOutputRaw?.courses || toolOutputRaw?.course) {
+      return toolOutputRaw;
+    }
+    // Return mock California courses for local development
+    return {
+      courses: [
+        {
+          id: "torrey-pines",
+          name: "Torrey Pines Golf Course",
+          city: "San Diego",
+          state: "CA",
+          lon: -117.2517,
+          lat: 32.8987,
+          type: "public" as const,
+          verified: true,
+          availability: generateMockAvailability(),
+        },
+        {
+          id: "balboa-park",
+          name: "Balboa Park Golf Course",
+          city: "San Diego",
+          state: "CA",
+          lon: -117.1461,
+          lat: 32.7338,
+          type: "public" as const,
+          verified: true,
+          availability: generateMockAvailability(),
+        },
+        {
+          id: "aviara-golf",
+          name: "Aviara Golf Club",
+          city: "Carlsbad",
+          state: "CA",
+          lon: -117.2839,
+          lat: 33.1092,
+          type: "resort" as const,
+          verified: true,
+          availability: generateMockAvailability(),
+        },
+        {
+          id: "maderas-golf",
+          name: "Maderas Golf Club",
+          city: "Poway",
+          state: "CA",
+          lon: -117.0364,
+          lat: 32.9628,
+          type: "semi-private" as const,
+          verified: true,
+          availability: generateMockAvailability(),
+        },
+        {
+          id: "coronado-golf",
+          name: "Coronado Golf Course",
+          city: "Coronado",
+          state: "CA",
+          lon: -117.1833,
+          lat: 32.6781,
+          type: "public" as const,
+          verified: false,
+          availability: generateMockAvailability(),
+        },
+      ] as CoursePoint[],
+    };
+  }, [toolOutputRaw]);
+
+  // Helper function to generate mock availability
+  function generateMockAvailability() {
+    const availability = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      availability.push({
+        date: date.toISOString().split('T')[0],
+        tee_times: Array.from({ length: 12 }, (_, j) => ({
+          time: `${7 + j}:00`,
+          available: Math.random() > 0.3,
+          price: 50 + Math.floor(Math.random() * 150),
+          players_available: 4,
+        })),
+      });
+    }
+    return availability;
+  }
 
   const [state, setState] = useWidgetState<GolfWidgetState>(() => ({
     __v: 1,
@@ -89,13 +177,14 @@ export default function GolfPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markerPopupsRef = useRef<Map<string, mapboxgl.Popup>>(new Map()); // Store popups by course ID
   const courseCardRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Calculate availability for each course
@@ -137,6 +226,17 @@ export default function GolfPage() {
     const scores = (coursesWithAvailability ?? []).map((c: any) => c?.availabilityScore ?? 0);
     const m = Math.max(0, ...scores);
     return Number.isFinite(m) ? m : 0;
+  }, [coursesWithAvailability]);
+
+  // Debug: Log courses to check verified property
+  useEffect(() => {
+    if (coursesWithAvailability.length > 0) {
+      console.log('Courses with availability:', coursesWithAvailability.map((c: any) => ({ 
+        name: c.name, 
+        verified: c.verified,
+        id: c.id 
+      })));
+    }
   }, [coursesWithAvailability]);
 
   // Color spectrum: Green (high availability) → Yellow → Red (low availability)
@@ -289,25 +389,29 @@ export default function GolfPage() {
     if (!map) return;
 
     const addMarkers = () => {
-      // Remove existing markers
+      // Remove existing markers and popups
       markersRef.current.forEach(marker => marker.remove());
       markersRef.current = [];
+      markerPopupsRef.current.clear();
 
       // Add new markers
       coursesWithAvailability.forEach((course) => {
         // Create custom marker element
         const el = document.createElement('div');
         el.className = 'custom-marker';
+        el.dataset.courseId = course.id;
         
         const color = getMarkerColor(course);
         
         // Check if this is a highly available course (top 30% of available slots)
+        // AND has good availability (normalized score > 0.6, which maps to green/yellow colors)
         const maxAvailable = Math.max(...coursesWithAvailability.map(c => c.totalAvailable));
-        const isHighlyAvailable = course.totalAvailable > maxAvailable * 0.7;
+        const normalizedScore = maxAvailable > 0 ? course.availabilityScore / maxAvailable : 0;
+        const isHighlyAvailable = course.totalAvailable > maxAvailable * 0.7 && normalizedScore > 0.6;
         
         // Create marker HTML with teardrop shape
         el.innerHTML = `
-          <div style="
+          <div class="marker-inner" style="
             position: relative;
             width: 25px;
             height: 25px;
@@ -317,7 +421,7 @@ export default function GolfPage() {
             border: 2px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s ease-out;
           ">
             ${isHighlyAvailable ? `
               <div style="
@@ -333,20 +437,59 @@ export default function GolfPage() {
           </div>
         `;
         
-        // Add hover effect
+        // Add hover effect for marker
         el.addEventListener('mouseenter', () => {
-          const markerDiv = el.querySelector('div') as HTMLElement;
+          const markerDiv = el.querySelector('.marker-inner') as HTMLElement;
           if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1.2)';
         });
         el.addEventListener('mouseleave', () => {
-          const markerDiv = el.querySelector('div') as HTMLElement;
+          const markerDiv = el.querySelector('.marker-inner') as HTMLElement;
           if (markerDiv) markerDiv.style.transform = 'rotate(-45deg) scale(1)';
         });
+        
+        // Create popup with course name
+        const popup = new mapboxgl.Popup({
+          offset: 15,
+          anchor: 'bottom',
+          closeButton: false,
+          closeOnClick: false,
+          closeOnMove: false,
+          focusAfterOpen: false,
+          maxWidth: 'none',
+          className: 'course-name-popup'
+        }).setHTML(`
+          <div style="
+            padding: 4px 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            white-space: nowrap;
+            background: white;
+            border-radius: 4px;
+          ">
+            ${course.name}
+          </div>
+        `).setLngLat([course.lon!, course.lat!]);
+        
+        // Store popup reference
+        markerPopupsRef.current.set(course.id, popup);
         
         // Create marker
         const marker = new mapboxgl.Marker(el)
           .setLngLat([course.lon!, course.lat!])
           .addTo(map);
+        
+        // Show popup on marker hover (only if not selected)
+        el.addEventListener('mouseenter', () => {
+          if (state?.selectedCourseId !== course.id && !popup.isOpen()) {
+            popup.addTo(map);
+          }
+        });
+        el.addEventListener('mouseleave', () => {
+          if (state?.selectedCourseId !== course.id) {
+            popup.remove();
+          }
+        });
         
         // Add click handler
         el.addEventListener('click', () => {
@@ -392,6 +535,28 @@ export default function GolfPage() {
     if (map.isStyleLoaded()) doFit();
     else map.once('load', doFit);
   }, [coursesWithAvailability, safeArea?.insets?.bottom]);
+
+  // Update popup visibility when selected course changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    markerPopupsRef.current.forEach((popup, courseId) => {
+      const isSelected = state?.selectedCourseId === courseId;
+      
+      if (isSelected) {
+        // Show popup for selected course and keep it open
+        if (!popup.isOpen()) {
+          popup.addTo(map);
+        }
+      } else {
+        // Hide popup for non-selected courses
+        if (popup.isOpen()) {
+          popup.remove();
+        }
+      }
+    });
+  }, [state?.selectedCourseId]);
 
   const selectedCourse = useMemo(() => {
     const id = state?.selectedCourseId;
@@ -468,7 +633,7 @@ export default function GolfPage() {
           <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg">
             <div className="relative">
               <button
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-ink-black)] hover:bg-gray-50 rounded-lg transition-colors w-full"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[var(--color-ink-black)] hover:bg-gray-50 rounded-lg transition-colors w-full"
                 onClick={() => setShowDatePicker(!showDatePicker)}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -523,7 +688,7 @@ export default function GolfPage() {
           {/* Availability Legend - Shows on hover, same height as date picker button */}
           <div 
             className={`bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden transition-all duration-300 ease-out ${
-              showLegend ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0'
+              showLegend ? 'max-w-[250px] opacity-100' : 'max-w-0 opacity-0'
             }`}
             style={{ height: '42px' }}
           >
@@ -656,16 +821,16 @@ export default function GolfPage() {
                 const isSelected = state?.selectedCourseId === c.id;
                 const dimForNoAvail = (toolOutput?.searchContext?.matched_date && !c.hasAvailability);
                 return (
-                  <button
+                  <div
                     key={c.id}
                     ref={(el) => {
                       if (el) {
-                        courseCardRefs.current.set(c.id, el);
+                        courseCardRefs.current.set(c.id, el as any);
                       } else {
                         courseCardRefs.current.delete(c.id);
                       }
                     }}
-                    className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out ${
+                    className={`flex-shrink-0 bg-white rounded-[16px] shadow-[var(--shadow-card)] hover:shadow-xl transition-all duration-300 ease-out cursor-pointer ${
                       isSelected 
                         ? "" 
                         : "hover:translate-y-[-2px]"
@@ -675,6 +840,25 @@ export default function GolfPage() {
                       transformOrigin: 'bottom center'
                     }}
                     onClick={() => !isSelected && onSelectCourse(c.id)}
+                    onMouseEnter={() => {
+                      // Show popup on card hover (only if not selected)
+                      if (state?.selectedCourseId !== c.id) {
+                        const popup = markerPopupsRef.current.get(c.id);
+                        const map = mapRef.current;
+                        if (popup && map && !popup.isOpen()) {
+                          popup.addTo(map);
+                        }
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      // Hide popup when leaving card (only if not selected)
+                      if (state?.selectedCourseId !== c.id) {
+                        const popup = markerPopupsRef.current.get(c.id);
+                        if (popup && popup.isOpen()) {
+                          popup.remove();
+                        }
+                      }
+                    }}
                   >
                     {/* Compact Layout (Not Selected) */}
                     {!isSelected ? (
@@ -689,14 +873,6 @@ export default function GolfPage() {
                             alt={c.name}
                             className="w-full h-full object-cover"
                           />
-                          {/* Verified Badge - Bottom Right */}
-                          {c.verified && (
-                            <img
-                              src="/verfied_badge.png"
-                              alt="Golf.AI Verified"
-                              className="absolute bottom-1 right-1 w-5 h-5"
-                            />
-                          )}
                         </div>
 
                         {/* Course Info */}
@@ -714,18 +890,12 @@ export default function GolfPage() {
                               </span>
                             )}
                             {c.type && (
-                              <>
-                                <span className="text-[var(--color-ink-gray)]">•</span>
-                                <span className="text-[var(--color-ink-gray)] capitalize">{c.type}</span>
-                              </>
+                              <span className="px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs capitalize">{c.type}</span>
                             )}
                             {c.verified && (
-                              <>
-                                <span className="text-[var(--color-ink-gray)]">•</span>
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-accent-teal)]/10 text-[var(--color-accent-teal)] font-semibold text-[10px]">
-                                  VERIFIED
-                                </span>
-                              </>
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-accent-teal)]/10 text-[var(--color-accent-teal)] font-semibold text-[10px]">
+                                VERIFIED
+                              </span>
                             )}
                           </div>
                         </div>
@@ -748,7 +918,7 @@ export default function GolfPage() {
                             <img
                               src="/verfied_badge.png"
                               alt="Golf.AI Verified"
-                              className="absolute top-2 left-2 w-10 h-10 drop-shadow-lg"
+                              className="absolute top-0 left-2 w-11 h-14 drop-shadow-lg"
                             />
                           )}
                           {/* Close Button - Top Right */}
@@ -813,7 +983,7 @@ export default function GolfPage() {
                         </div>
                       </>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
