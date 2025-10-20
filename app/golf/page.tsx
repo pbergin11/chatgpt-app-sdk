@@ -694,7 +694,7 @@ export default function GolfPage() {
                             <img
                               src="/verfied_badge.png"
                               alt="Golf.AI Verified"
-                              className="absolute bottom-1 right-1 w-6 h-6"
+                              className="absolute bottom-1 right-1 w-5 h-5"
                             />
                           )}
                         </div>
@@ -707,7 +707,7 @@ export default function GolfPage() {
                           <p className="text-[var(--color-ink-gray)] text-xs mb-2 line-clamp-1">
                             {c.city}{c.state ? `, ${c.state}` : ""}
                           </p>
-                          <div className="flex items-center gap-2 text-xs">
+                          <div className="flex items-center gap-2 text-xs flex-wrap">
                             {typeof c.distance === "number" && (
                               <span className="text-[var(--color-ink-gray)]">
                                 {c.distance} mi
@@ -717,6 +717,14 @@ export default function GolfPage() {
                               <>
                                 <span className="text-[var(--color-ink-gray)]">•</span>
                                 <span className="text-[var(--color-ink-gray)] capitalize">{c.type}</span>
+                              </>
+                            )}
+                            {c.verified && (
+                              <>
+                                <span className="text-[var(--color-ink-gray)]">•</span>
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-accent-teal)]/10 text-[var(--color-accent-teal)] font-semibold text-[10px]">
+                                  VERIFIED
+                                </span>
                               </>
                             )}
                           </div>
@@ -740,7 +748,7 @@ export default function GolfPage() {
                             <img
                               src="/verfied_badge.png"
                               alt="Golf.AI Verified"
-                              className="absolute top-2 left-2 w-12 h-12"
+                              className="absolute top-2 left-2 w-10 h-10 drop-shadow-lg"
                             />
                           )}
                           {/* Close Button - Top Right */}
@@ -776,7 +784,7 @@ export default function GolfPage() {
                           </p>
 
                           {/* Tags */}
-                          <div className={`flex gap-1.5 ${displayMode === 'inline' ? 'mb-1.5' : 'mb-2'}`}>
+                          <div className={`flex gap-1.5 flex-wrap ${displayMode === 'inline' ? 'mb-1.5' : 'mb-2'}`}>
                             {c.type && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
                                 {c.type}
@@ -785,6 +793,11 @@ export default function GolfPage() {
                             <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs">
                               18 holes
                             </span>
+                            {c.verified && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-accent-teal)]/10 text-[var(--color-accent-teal)] font-bold text-xs">
+                                VERIFIED
+                              </span>
+                            )}
                           </div>
 
                           {/* Action Button */}
