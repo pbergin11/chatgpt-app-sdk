@@ -459,8 +459,8 @@ export default function GolfPage() {
           className: 'course-name-popup'
         }).setHTML(`
           <div style="
-            padding: 4px 8px;
-            font-size: 16px;
+            padding: 2px 2px;
+            font-size: 14px;
             font-weight: 600;
             color: #1a1a1a;
             white-space: nowrap;
