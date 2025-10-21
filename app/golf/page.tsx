@@ -19,6 +19,7 @@ import {
   useToolResponseMetadata,
 } from "../hooks";
 import BlocksWaveIcon from "./BlocksWaveIcon";
+import { getCoursesNearSanDiego } from "../actions/getCourses";
 
 // Types for tool outputs we expect
 type CoursePoint = {
@@ -58,91 +59,40 @@ export default function GolfPage() {
     searchContext?: { matched_date?: string | null };
   }>();
 
-  // For local debugging: Load California courses if no tool output
+  // State for local development data
+  const [localCourses, setLocalCourses] = useState<CoursePoint[]>([]);
+  const [isLoadingLocal, setIsLoadingLocal] = useState(false);
+
+  // For local debugging: Load San Diego courses from Supabase if no tool output
+  useEffect(() => {
+    // Only load local data if we don't have tool output and haven't loaded yet
+    if (!toolOutputRaw?.courses && !toolOutputRaw?.course && localCourses.length === 0 && !isLoadingLocal) {
+      setIsLoadingLocal(true);
+      getCoursesNearSanDiego()
+        .then((courses: any[]) => {
+          // Server action already returns the correct format
+          console.log(courses);
+          setLocalCourses(courses as CoursePoint[]);
+        })
+        .catch((error: any) => {
+          console.error('Failed to load local courses:', error);
+        })
+        .finally(() => {
+          setIsLoadingLocal(false);
+        });
+    }
+  }, [toolOutputRaw, localCourses.length, isLoadingLocal]);
+
   const toolOutput = useMemo(() => {
     if (toolOutputRaw?.courses || toolOutputRaw?.course) {
       return toolOutputRaw;
     }
-    // Return mock California courses for local development
+    // Return real San Diego courses from Supabase for local development
     return {
-      courses: [
-        {
-          id: "torrey-pines",
-          name: "Torrey Pines Golf Course",
-          city: "San Diego",
-          state: "CA",
-          lon: -117.2517,
-          lat: 32.8987,
-          type: "public" as const,
-          verified: true,
-          availability: generateMockAvailability(),
-        },
-        {
-          id: "balboa-park",
-          name: "Balboa Park Golf Course",
-          city: "San Diego",
-          state: "CA",
-          lon: -117.1461,
-          lat: 32.7338,
-          type: "public" as const,
-          verified: true,
-          availability: generateMockAvailability(),
-        },
-        {
-          id: "aviara-golf",
-          name: "Aviara Golf Club",
-          city: "Carlsbad",
-          state: "CA",
-          lon: -117.2839,
-          lat: 33.1092,
-          type: "resort" as const,
-          verified: true,
-          availability: generateMockAvailability(),
-        },
-        {
-          id: "maderas-golf",
-          name: "Maderas Golf Club",
-          city: "Poway",
-          state: "CA",
-          lon: -117.0364,
-          lat: 32.9628,
-          type: "semi-private" as const,
-          verified: true,
-          availability: generateMockAvailability(),
-        },
-        {
-          id: "coronado-golf",
-          name: "Coronado Golf Course",
-          city: "Coronado",
-          state: "CA",
-          lon: -117.1833,
-          lat: 32.6781,
-          type: "public" as const,
-          verified: false,
-          availability: generateMockAvailability(),
-        },
-      ] as CoursePoint[],
+      courses: localCourses,
     };
-  }, [toolOutputRaw]);
+  }, [toolOutputRaw, localCourses]);
 
-  // Helper function to generate mock availability
-  function generateMockAvailability() {
-    const availability = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      availability.push({
-        date: date.toISOString().split('T')[0],
-        tee_times: Array.from({ length: 12 }, (_, j) => ({
-          time: `${7 + j}:00`,
-          available: Math.random() > 0.3,
-          price: 50 + Math.floor(Math.random() * 150),
-          players_available: 4,
-        })),
-      });
-    }
-    return availability;
-  }
 
   const [state, setState] = useWidgetState<GolfWidgetState>(() => ({
     __v: 1,

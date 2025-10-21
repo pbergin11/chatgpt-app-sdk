@@ -41,7 +41,7 @@
 import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { searchCoursesByArea, findCourse, getLocationDescription, type GolfCourse } from "./mockGolfData";
+import { searchCoursesByArea, findCourse, getLocationDescription, checkRangeAvailability, type GolfCourse } from "@/lib/golfData";
 
 // Logging configuration
 const LOG_LEVEL = process.env.LOG_MCP || "none"; // none | basic | full | verbose
@@ -363,8 +363,8 @@ const handler = createMcpHandler(async (server) => {
         effectiveFilters.date = matchedDate;
       }
 
-      // Search courses using mock data
-      const courses = searchCoursesByArea(city, state, country, radius, effectiveFilters);
+      // Search courses using Supabase
+      const courses = await searchCoursesByArea(city, state, country, radius, effectiveFilters);
 
       // Format location string for response
       const locationStr = getLocationDescription(city, state, country);
@@ -402,13 +402,10 @@ const handler = createMcpHandler(async (server) => {
             rating_stars: course.rating_stars,
             holes: course.holes,
             par: course.par,
+            yardage: course.yardage,
             amenities: course.amenities,
-            availability: course.availability, // Include availability data for markers
-            ...(matchedDate ? (() => {
-              const day = course.availability.find(d => d.date === matchedDate);
-              const availableSlots = day ? day.tee_times.filter(t => t.available).length : 0;
-              return { matched_date: matchedDate, available_on_date: availableSlots > 0 };
-            })() : {}),
+            image_url: course.image_url,
+            verified: course.verified,
           })),
           searchContext: { 
             city, 
@@ -473,7 +470,7 @@ const handler = createMcpHandler(async (server) => {
       }
 
       // Find the course
-      const course = findCourse(courseId, name, state, country);
+      const course = await findCourse(courseId, name, state, country);
 
       if (!course) {
         const searchTerm = courseId || name;
@@ -488,32 +485,25 @@ const handler = createMcpHandler(async (server) => {
         };
       }
 
-      // Calculate total available tee times
-      const totalAvailableSlots = course.availability.reduce((sum, day) => 
-        sum + day.tee_times.filter(t => t.available).length, 0
-      );
-
       // Build detailed text response
-      const amenitiesList = Object.entries(course.amenities)
-        .filter(([_, hasIt]) => hasIt)
-        .map(([amenity, _]) => amenity.replace(/_/g, ' '))
-        .join(', ');
+      const amenitiesList = course.amenities?.join(', ').replace(/_/g, ' ') || 'None listed';
+      
+      const designer = course.data?.golf?.courses?.[0]?.architecture?.original_architects?.join(', ') || 'Unknown';
+      const yearBuilt = course.data?.golf?.courses?.[0]?.year_opened || 'Unknown';
+      const localRules = course.data?.golf?.courses?.[0]?.local_rules || '';
 
       const detailsText = `${course.name} is a ${course.type} ${course.holes}-hole course in ${course.city}${course.state ? ', ' + course.state : ''}${course.country ? ', ' + course.country : ''}. ` +
-        `Par ${course.par}, ${course.yardage} yards. Designed by ${course.designer} in ${course.year_built}. ` +
-        `Average price: $${course.average_price}. Rating: ${course.rating_stars} stars (${course.reviews_count} reviews). ` +
-        `${totalAvailableSlots} tee times available in the next 7 days.` +
-        `${course.local_rules ? ' Local rules: ' + course.local_rules : ''}`;
+        `Par ${course.par}, ${course.yardage} yards. Designed by ${designer} in ${yearBuilt}. ` +
+        `Average price: $${course.average_price}. ` +
+        `${course.verified ? 'Golf.AI Verified. ' : ''}` +
+        `${localRules ? 'Local rules: ' + localRules : ''}`;
 
       const response = {
         content: [
           { type: "text" as const, text: detailsText },
         ],
         structuredContent: { 
-          course: {
-            ...course,
-            total_available_slots: totalAvailableSlots,
-          },
+          course: course,
         },
         _meta: golfToolMeta,
       };
@@ -551,7 +541,7 @@ const handler = createMcpHandler(async (server) => {
       log.verbose("  Extra context:", extra);
 
       // Find the course
-      const course = findCourse(courseId);
+      const course = await findCourse(courseId);
       if (!course) {
         return {
           content: [
@@ -564,59 +554,34 @@ const handler = createMcpHandler(async (server) => {
         };
       }
 
-      // Check availability if date and time provided
-      let availabilityInfo = null;
-      let estimatedPrice = course.average_price;
+      // For now, we don't have real-time tee time availability
+      // This would require integration with booking providers (ForeTees, ChronoGolf, etc.)
+      const estimatedPrice = course.average_price;
 
-      if (date && time) {
-        const dayAvailability = course.availability.find(d => d.date === date);
-        if (dayAvailability) {
-          const teeTime = dayAvailability.tee_times.find(t => t.time === time);
-          if (teeTime) {
-            if (!teeTime.available) {
-              return {
-                content: [
-                  { 
-                    type: "text" as const, 
-                    text: `The requested time slot (${time} on ${date}) is not available at ${course.name}. Please choose a different time.` 
-                  },
-                ],
-                structuredContent: {
-                  error: "time_slot_unavailable",
-                  course: course.name,
-                  requested_date: date,
-                  requested_time: time,
-                },
-                isError: true,
-              };
-            }
-            if (teeTime.players_available < players) {
-              return {
-                content: [
-                  { 
-                    type: "text" as const, 
-                    text: `Only ${teeTime.players_available} player spot(s) available at ${time} on ${date}. You requested ${players} players.` 
-                  },
-                ],
-                isError: true,
-              };
-            }
-            availabilityInfo = {
-              confirmed_available: true,
-              price_per_player: teeTime.price,
-              total_price: teeTime.price * players,
-            };
-            estimatedPrice = teeTime.price;
-          }
+      // Generate booking link based on provider
+      let bookingLink = course.website || '';
+      
+      // If course has a booking provider, construct provider-specific link
+      if (course.data?.provider && course.data?.provider_id) {
+        const provider = course.data.provider.toLowerCase();
+        const providerId = course.data.provider_id;
+        
+        switch (provider) {
+          case 'teebox':
+            bookingLink = `https://www.teebox.com/book/${providerId}`;
+            break;
+          case 'foretees':
+            bookingLink = `https://foreupsoftware.com/index.php/booking/${providerId}`;
+            break;
+          case 'chronogolf':
+            bookingLink = `https://www.chronogolf.com/club/${providerId}`;
+            break;
+          default:
+            bookingLink = course.website || '';
         }
       }
-
-      // Generate booking link
-      const bookingLink = `${course.website}/book?courseId=${encodeURIComponent(courseId)}&players=${players}${date ? `&date=${date}` : ""}${time ? `&time=${time}` : ""}`;
       
-      const responseText = availabilityInfo 
-        ? `Tee time available at ${course.name} for ${players} player(s) on ${date} at ${time}. Total: $${availabilityInfo.total_price}.`
-        : `Booking initiated for ${course.name}. ${players} player(s).${date ? ` Date: ${date}.` : ""}${time ? ` Time: ${time}.` : ""}`;
+      const responseText = `Booking initiated for ${course.name}. ${players} player(s).${date ? ` Date: ${date}.` : ""}${time ? ` Time: ${time}.` : ""} Estimated price: $${estimatedPrice} per player.`;
 
       const response = {
         content: [
@@ -630,7 +595,7 @@ const handler = createMcpHandler(async (server) => {
             time: time ?? null,
             players,
             bookingLink,
-            availability: availabilityInfo,
+            estimatedPrice,
             contact: {
               phone: course.phone,
               email: course.email,
