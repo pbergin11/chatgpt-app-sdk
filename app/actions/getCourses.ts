@@ -24,8 +24,6 @@ export async function getCoursesNearSanDiego() {
       type: course.type,
       verified: course.verified,
     }));
-    console.log(courses);
-    
   } catch (error) {
     console.error('Failed to fetch courses:', error);
     return [];

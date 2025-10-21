@@ -579,11 +579,25 @@ export default function GolfPage() {
           onMouseEnter={() => setShowLegend(true)}
           onMouseLeave={() => setShowLegend(false)}
         >
+          {/* Logo */}
+          <a 
+            href="https://golf.ai" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden p-2 hover:bg-white transition-colors block"
+          >
+            <img 
+              src={displayMode === 'fullscreen' ? '/logo_fullscreen.jpg' : '/logo_inline.jpg'}
+              alt="Golf.ai Logo"
+              className="h-[26px] w-auto object-contain"
+            />
+          </a>
+
           {/* Date Picker */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg flex items-center justify-center">
             <div className="relative">
               <button
-                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[var(--color-ink-black)] hover:bg-gray-50 rounded-lg transition-colors w-full"
+                className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-[var(--color-ink-black)] hover:bg-gray-50 rounded-lg transition-colors w-full"
                 onClick={() => setShowDatePicker(!showDatePicker)}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,7 +609,7 @@ export default function GolfPage() {
               {/* Simple Date Picker Dropdown */}
               {showDatePicker && (
                 <div 
-                  className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl min-w-[240px]"
+                  className="absolute top-full left-0 mt-2 bg-white rounded-lg border border-[var(--color-ui-line)] shadow-xl min-w-[200px]"
                   style={{ 
                     maxHeight: displayMode === 'inline' ? '200px' : '300px',
                     overflowY: 'auto'
