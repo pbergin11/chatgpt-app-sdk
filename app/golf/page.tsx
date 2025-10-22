@@ -106,11 +106,18 @@ export default function GolfPage() {
     viewport: { center: [-117.1611, 32.7157], zoom: 10 }, // default San Diego
   }));
 
-  const displayMode = useDisplayMode();
+  // Check if window.openai exists
+  const hasOpenAI = typeof window !== 'undefined' && !!(window as any).openai;
+
+  const displayModeFromSDK = useDisplayMode();
   const rawMaxHeight = useMaxHeight() ?? undefined;
   const requestDisplayMode = useRequestDisplayMode();
   const callTool = useCallTool();
   const userAgent = useUserAgent();
+  
+  // Local display mode override for localhost testing
+  const [localDisplayMode, setLocalDisplayMode] = useState<'inline' | 'fullscreen'>('inline');
+  const displayMode = hasOpenAI ? displayModeFromSDK : localDisplayMode;
   
   // Cap maxHeight at 750px for inline mode (both mobile and desktop) to prevent infinite growth
   const maxHeight = useMemo(() => {
@@ -125,9 +132,6 @@ export default function GolfPage() {
   const toolInput = useToolInput();
   const toolOutputFromHook = useToolOutput();
   const toolResponseMetadata = useToolResponseMetadata();
-  
-  // Check if window.openai exists
-  const hasOpenAI = typeof window !== 'undefined' && !!(window as any).openai;
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [noToken, setNoToken] = useState(false);
@@ -568,6 +572,23 @@ export default function GolfPage() {
       
       // Fetch details via MCP
       callTool && callTool("get_course_details", { courseId: id });
+      
+      // Center the card on screen after a brief delay to allow expansion
+      setTimeout(() => {
+        const cardElement = courseCardRefs.current.get(id);
+        if (cardElement) {
+          const cardRect = cardElement.getBoundingClientRect();
+          const cardCenterX = cardRect.left + cardRect.width / 2;
+          const screenCenterX = window.innerWidth / 2;
+          const scrollOffset = cardCenterX - screenCenterX;
+          
+          // Smooth scroll to center the card horizontally
+          cardElement.parentElement?.scrollBy({
+            left: scrollOffset,
+            behavior: 'smooth'
+          });
+        }
+      }, 50); // Small delay to allow card to start expanding
     }
   };
 
@@ -661,7 +682,7 @@ export default function GolfPage() {
             className="bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-ui-line)] shadow-lg overflow-hidden p-2 hover:bg-white transition-colors block"
           >
             <img 
-              src={displayMode === 'fullscreen' ? '/logo_fullscreen.jpg' : '/logo_inline.jpg'}
+              src={displayMode === 'fullscreen' ? 'https://i.postimg.cc/q709vj6t/logo-inline.jpg' : 'https://i.postimg.cc/4dxqzy5V/logo-fullscreen.jpg'}
               alt="Golf.ai Logo"
               className="h-[26px] w-auto object-contain"
             />
@@ -800,7 +821,20 @@ export default function GolfPage() {
             {/* Layout Properties */}
             <div className="mb-2 pb-2 border-b border-gray-200">
               <div className="font-semibold text-[var(--color-accent-teal)] mb-1">Layout</div>
-              <div><span className="text-[var(--color-ink-gray)]">displayMode:</span> <span className="font-semibold">{displayMode ?? 'undefined'}</span></div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[var(--color-ink-gray)]">displayMode:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{displayMode ?? 'undefined'}</span>
+                  {!hasOpenAI && (
+                    <button
+                      onClick={() => setLocalDisplayMode(prev => prev === 'inline' ? 'fullscreen' : 'inline')}
+                      className="px-2 py-0.5 bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition"
+                    >
+                      Toggle
+                    </button>
+                  )}
+                </div>
+              </div>
               <div><span className="text-[var(--color-ink-gray)]">maxHeight:</span> <span className="font-semibold">{maxHeight ?? 'undefined'}{maxHeight ? 'px' : ''}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">safeArea.top:</span> <span className="font-semibold">{safeArea?.insets?.top ?? 'N/A'}</span></div>
               <div><span className="text-[var(--color-ink-gray)]">safeArea.bottom:</span> <span className="font-semibold">{safeArea?.insets?.bottom ?? 'N/A'}</span></div>
@@ -916,7 +950,7 @@ export default function GolfPage() {
                         {/* Verified Badge - Top Left of Card */}
                         {c.verified && (
                           <img
-                            src="/verfied_badge.png"
+                            src="https://i.postimg.cc/WbqRWDPb/verfied-badge.png"
                             alt="Golf.AI Verified"
                             className="absolute top-0 left-3 w-6 h-8 drop-shadow-lg z-10"
                           />
@@ -965,7 +999,7 @@ export default function GolfPage() {
                       <>
                         {displayMode === 'inline' ? (
                           /* INLINE COMPACT LAYOUT */
-                          <div className="flex gap-2 p-2">
+                          <div className="flex gap-2 p-2 items-top">
                             {/* Left: Course Image */}
                             <div 
                               className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-lg flex-shrink-0"
@@ -978,7 +1012,7 @@ export default function GolfPage() {
                               />
                               {c.verified && (
                                 <img
-                                  src="/verfied_badge.png"
+                                  src="https://i.postimg.cc/WbqRWDPb/verfied-badge.png"
                                   alt="Golf.AI Verified"
                                   className="absolute top-0 left-1 w-8 h-10 drop-shadow-lg"
                                 />
@@ -986,7 +1020,7 @@ export default function GolfPage() {
                             </div>
 
                             {/* Right: Course Info */}
-                            <div className="flex-1 flex flex-col min-w-0">
+                            <div className="flex-1 flex flex-col min-w-0 justify-center">
                               {/* Close Button - Absolute Top Right */}
                               <button
                                 className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1 hover:bg-white transition-all group z-10"
@@ -1002,9 +1036,9 @@ export default function GolfPage() {
                               </button>
 
                               {/* Top Row: Name, Location, No Tee Times Badge */}
-                              <div className="flex items-start justify-between gap-2 mb-1 pr-8">
+                              <div className="flex items-start justify-between gap-2 mb-1">
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-bold text-sm text-[var(--color-ink-black)] line-clamp-1">
+                                  <h3 className="font-bold text-sm text-[var(--color-ink-black)] break-words">
                                     {c.name}
                                   </h3>
                                   <p className="text-xs text-[var(--color-ink-gray)]">
@@ -1050,7 +1084,7 @@ export default function GolfPage() {
                                   ) : teeTimesData?.teetimes && teeTimesData.teetimes.length > 0 ? (
                                     /* Inline Tee Times - Compact */
                                     <div className="space-y-1">
-                                      {/* Date selector - compact */}
+                                      {/* Date selector and filters - compact */}
                                       <div className="flex items-center justify-between gap-1 mb-1">
                                         <button
                                           className="p-0.5 hover:bg-gray-100 rounded transition disabled:opacity-30"
@@ -1058,19 +1092,31 @@ export default function GolfPage() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (selectedDate) {
-                                              const newDate = new Date(selectedDate);
-                                              newDate.setDate(newDate.getDate() - 1);
-                                              setSelectedDate(newDate);
-                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                              const today = new Date();
+                                              today.setHours(0, 0, 0, 0);
+                                              const selected = new Date(selectedDate);
+                                              selected.setHours(0, 0, 0, 0);
+                                              
+                                              if (selected > today) {
+                                                const newDate = new Date(selectedDate);
+                                                newDate.setDate(newDate.getDate() - 1);
+                                                setSelectedDate(newDate);
+                                                if (c.provider_id) {
+                                                  fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], {
+                                                    patrons: teeTimeFilters.patrons,
+                                                    holes: teeTimeFilters.holes,
+                                                  });
+                                                }
+                                              }
                                             }
                                           }}
                                         >
-                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                           </svg>
                                         </button>
-                                        <span className="text-[10px] font-semibold">
-                                          {selectedDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        <span className="text-[10px] font-semibold text-black">
+                                          {selectedDate?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                         </span>
                                         <button
                                           className="p-0.5 hover:bg-gray-100 rounded transition"
@@ -1080,39 +1126,145 @@ export default function GolfPage() {
                                               const newDate = new Date(selectedDate);
                                               newDate.setDate(newDate.getDate() + 1);
                                               setSelectedDate(newDate);
-                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                              if (c.provider_id) {
+                                                fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], {
+                                                  patrons: teeTimeFilters.patrons,
+                                                  holes: teeTimeFilters.holes,
+                                                });
+                                              }
                                             }
                                           }}
                                         >
-                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                           </svg>
                                         </button>
                                       </div>
+
+                                      {/* Filter options - compact */}
+                                      <div className="flex items-center gap-1 mb-1">
+                                        {/* Players dropdown with icon */}
+                                        <div className="relative">
+                                          <select
+                                            value={teeTimeFilters.patrons}
+                                            onChange={(e) => {
+                                              const newPatrons = parseInt(e.target.value);
+                                              setTeeTimeFilters(prev => ({ ...prev, patrons: newPatrons }));
+                                              if (c.provider_id && selectedDate) {
+                                                fetchTeeTimes(c.provider_id, selectedDate.toISOString().split('T')[0], {
+                                                  patrons: newPatrons,
+                                                  holes: teeTimeFilters.holes,
+                                                });
+                                              }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="pl-5 pr-6 py-1 text-[10px] rounded bg-[var(--color-bg-cream)] text-black cursor-pointer appearance-none font-medium"
+                                          >
+                                            <option value={1}>1 player</option>
+                                            <option value={2}>2 players</option>
+                                            <option value={3}>3 players</option>
+                                            <option value={4}>4 players</option>
+                                          </select>
+                                          <svg className="w-3 h-3 absolute left-1 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                          </svg>
+                                          <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                        </div>
+
+                                        {/* Holes dropdown with icon */}
+                                        <div className="relative">
+                                          <select
+                                            value={teeTimeFilters.holes}
+                                            onChange={(e) => {
+                                              const newHoles = parseInt(e.target.value);
+                                              setTeeTimeFilters(prev => ({ ...prev, holes: newHoles }));
+                                              if (c.provider_id && selectedDate) {
+                                                fetchTeeTimes(c.provider_id, selectedDate.toISOString().split('T')[0], {
+                                                  patrons: teeTimeFilters.patrons,
+                                                  holes: newHoles,
+                                                });
+                                              }
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="pl-5 pr-6 py-1 text-[10px] rounded bg-[var(--color-bg-cream)] text-black cursor-pointer appearance-none font-medium"
+                                          >
+                                            <option value={9}>9 holes</option>
+                                            <option value={18}>18 holes</option>
+                                          </select>
+                                          <svg className="w-3 h-3 absolute left-1 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                                          </svg>
+                                          <svg className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                        </div>
+
+                                        {/* Price range display with icon */}
+                                        {teeTimesData.teetimes.length > 0 && (() => {
+                                          const prices = teeTimesData.teetimes
+                                            .map((t: any) => t.pricePerPatron || 0)
+                                            .filter((p: number) => p > 0);
+                                          if (prices.length > 0) {
+                                            const minPrice = Math.min(...prices);
+                                            const maxPrice = Math.max(...prices);
+                                            return (
+                                              <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[var(--color-bg-cream)] rounded">
+                                                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span className="text-[10px] text-black font-medium">
+                                                  {minPrice === maxPrice ? `$${minPrice}` : 'Variable Pricing'}
+                                                </span>
+                                              </div>
+                                            );
+                                          }
+                                          return (
+                                            <div className="flex items-center gap-0.5 px-1.5 py-1 bg-[var(--color-bg-cream)] rounded">
+                                              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                              <span className="text-[10px] text-black font-medium">Variable Pricing</span>
+                                            </div>
+                                          );
+                                        })()}
+                                      </div>
+
                                       {/* Tee times - 2 rows max, horizontally scrollable */}
-                                      <div className="overflow-x-auto scrollbar-hide">
+                                      <div className="overflow-x-auto -mx-2 px-2">
                                         <div className="grid grid-flow-col auto-cols-max gap-1 pb-1" style={{ gridTemplateRows: 'repeat(2, minmax(0, 1fr))' }}>
-                                          {teeTimesData.teetimes.slice(0, 8).map((time: any, idx: number) => (
-                                            <button
-                                              key={idx}
-                                              className="px-2 py-1 bg-[var(--color-accent-teal)]/10 hover:bg-[var(--color-accent-teal)]/20 text-[var(--color-accent-teal)] rounded text-[10px] font-medium transition whitespace-nowrap"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (c.provider_id) {
-                                                  window.open(`https://foreupsoftware.com/index.php/booking/${c.provider_id}#/teetimes`, '_blank');
-                                                }
-                                              }}
-                                            >
-                                              {time.time}
-                                            </button>
-                                          ))}
+                                          {teeTimesData.teetimes.map((teeTime: any, idx: number) => {
+                                            // Parse the time in the course's timezone
+                                            const time = new Date(teeTime.apptTime);
+                                            const timeStr = time.toLocaleTimeString('en-US', { 
+                                              hour: 'numeric', 
+                                              minute: '2-digit',
+                                              hour12: true,
+                                              timeZone: teeTime.timezone // Use the course's timezone
+                                            });
+                                            return (
+                                              <button
+                                                key={idx}
+                                                className="px-2 py-1 bg-[#E8F5E9] hover:bg-[#C8E6C9] text-[var(--color-ink-black)] rounded text-[10px] font-medium transition whitespace-nowrap"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (teeTime.bookingUrl) {
+                                                    window.open(teeTime.bookingUrl, '_blank');
+                                                  }
+                                                }}
+                                              >
+                                                {timeStr}
+                                              </button>
+                                            );
+                                          })}
                                         </div>
                                       </div>
                                     </div>
                                   ) : teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess ? (
                                     /* Inline Waitlist - Compact */
-                                    <div className="space-y-1">
-                                      {/* Date selector */}
+                                    <div className="space-y-1.5">
+                                      {/* Date selector - darker text */}
                                       <div className="flex items-center justify-between gap-1 mb-1">
                                         <button
                                           className="p-0.5 hover:bg-gray-100 rounded transition disabled:opacity-30"
@@ -1127,11 +1279,11 @@ export default function GolfPage() {
                                             }
                                           }}
                                         >
-                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                           </svg>
                                         </button>
-                                        <span className="text-[10px] font-semibold">
+                                        <span className="text-[10px] font-semibold text-black">
                                           {selectedDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </span>
                                         <button
@@ -1146,7 +1298,7 @@ export default function GolfPage() {
                                             }
                                           }}
                                         >
-                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                           </svg>
                                         </button>
@@ -1154,50 +1306,98 @@ export default function GolfPage() {
                                       {/* Compact waitlist form */}
                                       <div className="space-y-1">
                                         <p className="text-[9px] text-[var(--color-ink-gray)]">Join waitlist to get notified</p>
+                                        {/* Name and Email row */}
                                         <div className="grid grid-cols-2 gap-1">
+                                          <input
+                                            type="text"
+                                            value={waitlistData.name}
+                                            onChange={(e) => setWaitlistData(prev => ({ ...prev, name: e.target.value }))}
+                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded text-gray-800"
+                                            placeholder="Name"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
                                           <input
                                             type="email"
                                             value={waitlistData.email}
                                             onChange={(e) => setWaitlistData(prev => ({ ...prev, email: e.target.value }))}
-                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded"
+                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded text-gray-800"
                                             placeholder="Email"
                                             onClick={(e) => e.stopPropagation()}
                                           />
+                                        </div>
+                                        {/* Phone and Time Range on same line */}
+                                        <div className="grid grid-cols-2 gap-1">
+                                          {/* Phone */}
                                           <input
-                                            type="time"
-                                            value={waitlistData.timeStart}
-                                            onChange={(e) => setWaitlistData(prev => ({ ...prev, timeStart: e.target.value }))}
-                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded"
+                                            type="tel"
+                                            value={waitlistData.phone}
+                                            onChange={(e) => setWaitlistData(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded text-gray-800"
+                                            placeholder="Phone (optional)"
                                             onClick={(e) => e.stopPropagation()}
                                           />
+                                          {/* Time Range */}
+                                          <div className="flex items-center gap-1">
+                                            <input
+                                              type="time"
+                                              value={waitlistData.timeStart}
+                                              onChange={(e) => setWaitlistData(prev => ({ ...prev, timeStart: e.target.value }))}
+                                              className="flex-1 px-1 py-1 text-[10px] border border-gray-300 rounded text-gray-800"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <span className="text-[8px] text-[var(--color-ink-gray)]">to</span>
+                                            <input
+                                              type="time"
+                                              value={waitlistData.timeEnd}
+                                              onChange={(e) => setWaitlistData(prev => ({ ...prev, timeEnd: e.target.value }))}
+                                              className="flex-1 px-1 py-1 text-[10px] border border-gray-300 rounded text-gray-800"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                          </div>
                                         </div>
-                                        <button
-                                          className="w-full px-2 py-1 bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (c.provider_id) handleWaitlistSubmit(c.id, c.provider_id);
-                                          }}
-                                          disabled={!waitlistData.email}
-                                        >
-                                          Join Waitlist
-                                        </button>
+                                        {/* Buttons row */}
+                                        <div className="grid grid-cols-2 gap-1">
+                                          <button
+                                            className="px-2 py-1 bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (c.provider_id) handleWaitlistSubmit(c.id, c.provider_id);
+                                            }}
+                                            disabled={!waitlistData.email}
+                                          >
+                                            Join Waitlist
+                                          </button>
+                                          {c.website && (
+                                            <button
+                                              className="px-2 py-1 bg-white border border-gray-300 text-[var(--color-ink-black)] rounded text-[10px] font-medium hover:bg-gray-50 transition"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(c.website!, '_blank');
+                                              }}
+                                            >
+                                              Visit Website
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   ) : null}
                                 </div>
                               ) : (
                                 /* No booking - just website button */
-                                c.website && (
-                                  <button
-                                    className="w-full bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition cursor-pointer px-2 py-1.5 mt-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      window.open(c.website!, '_blank');
-                                    }}
-                                  >
-                                    Visit Website
-                                  </button>
-                                )
+                                <div className="mt-2 w-full">
+                                  {c.website && (
+                                    <button
+                                      className="w-full bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition cursor-pointer px-2 py-1.5"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(c.website!, '_blank');
+                                      }}
+                                    >
+                                      Visit Website
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1216,7 +1416,7 @@ export default function GolfPage() {
                               />
                               {c.verified && (
                                 <img
-                                  src="/verfied_badge.png"
+                                  src="https://i.postimg.cc/WbqRWDPb/verfied-badge.png"
                                   alt="Golf.AI Verified"
                                   className="absolute top-0 left-2 w-11 h-14 drop-shadow-lg"
                                 />
