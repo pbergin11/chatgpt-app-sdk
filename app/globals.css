@@ -44,3 +44,97 @@ body {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
+
+/* Darker placeholder text for better visibility */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Ensure proper cursor behavior for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  cursor: pointer;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="time"],
+input[type="date"],
+textarea {
+  cursor: text;
+}
+
+input[disabled],
+button[disabled] {
+  cursor: not-allowed;
+}
+
+/* Phone Input Styling - react-phone-number-input */
+.PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px;
+  background: white;
+  position: relative;
+  min-width: 80px;
+}
+
+.PhoneInputCountryIcon {
+  width: 20px;
+  height: 14px;
+  opacity: 1 !important;
+  flex-shrink: 0;
+}
+
+.PhoneInputCountryIcon--border {
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.PhoneInputCountrySelectArrow {
+  opacity: 1 !important;
+  border-style: solid;
+  border-color: #6b7280 transparent transparent transparent !important;
+  border-width: 6px 5px 0 5px !important;
+  margin-left: auto;
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  transform: none !important;
+}
+
+.PhoneInputInput {
+  border-radius: 4px !important;
+  margin-left: 4px;
+}
+
+/* Dropdown select styling */
+.PhoneInputCountrySelect {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  color: #1f2937 !important;
+  font-weight: 500;
+}
+
+/* Dropdown options - make text dark */
+.PhoneInputCountrySelect option {
+  color: #1f2937 !important;
+  background: white;
+  font-weight: normal;
+  padding: 8px;
+}

@@ -42,6 +42,7 @@ import { baseURL } from "@/baseUrl";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 import { searchCoursesByArea, findCourse, getLocationDescription, checkRangeAvailability, type GolfCourse } from "@/lib/golfData";
+import { generateBookingUrl, getProviderDisplayName, hasBookingProvider } from "@/lib/bookingUtils";
 
 // Logging configuration
 const LOG_LEVEL = process.env.LOG_MCP || "none"; // none | basic | full | verbose
@@ -409,6 +410,9 @@ const handler = createMcpHandler(async (server) => {
             amenities: course.amenities,
             image_url: course.image_url,
             verified: course.verified,
+            website: course.website,
+            provider: course.provider,
+            provider_id: course.provider_id,
           })),
           searchContext: { 
             city, 
@@ -562,29 +566,20 @@ const handler = createMcpHandler(async (server) => {
       const estimatedPrice = course.average_price;
 
       // Generate booking link based on provider
-      let bookingLink = course.website || '';
+      const bookingLink = generateBookingUrl(
+        course.provider ?? null,
+        course.provider_id ?? null,
+        course.website ?? null,
+        date,
+        time,
+        players
+      );
+
+      // Get provider display name for response
+      const providerName = getProviderDisplayName(course.provider ?? null);
+      const hasProvider = hasBookingProvider(course.provider ?? null, course.provider_id ?? null);
       
-      // If course has a booking provider, construct provider-specific link
-      if (course.data?.provider && course.data?.provider_id) {
-        const provider = course.data.provider.toLowerCase();
-        const providerId = course.data.provider_id;
-        
-        switch (provider) {
-          case 'teebox':
-            bookingLink = `https://www.teebox.com/book/${providerId}`;
-            break;
-          case 'foretees':
-            bookingLink = `https://foreupsoftware.com/index.php/booking/${providerId}`;
-            break;
-          case 'chronogolf':
-            bookingLink = `https://www.chronogolf.com/club/${providerId}`;
-            break;
-          default:
-            bookingLink = course.website || '';
-        }
-      }
-      
-      const responseText = `Booking initiated for ${course.name}. ${players} player(s).${date ? ` Date: ${date}.` : ""}${time ? ` Time: ${time}.` : ""} Estimated price: $${estimatedPrice} per player.`;
+      const responseText = `Booking initiated for ${course.name}. ${players} player(s).${date ? ` Date: ${date}.` : ""}${time ? ` Time: ${time}.` : ""} Estimated price: $${estimatedPrice} per player.${hasProvider ? ` Book via ${providerName}.` : ''}`;
 
       const response = {
         content: [
@@ -599,6 +594,10 @@ const handler = createMcpHandler(async (server) => {
             players,
             bookingLink,
             estimatedPrice,
+            provider: course.provider ?? null,
+            provider_id: course.provider_id ?? null,
+            providerName,
+            hasProvider,
             contact: {
               phone: course.phone,
               email: course.email,

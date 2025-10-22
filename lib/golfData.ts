@@ -32,6 +32,9 @@ export interface GolfCourse {
   email?: string;
   website?: string;
   verified: boolean;
+  // Booking provider info
+  provider?: string | null;
+  provider_id?: string | null;
   // Full data for detail view
   data?: any;
 }
@@ -62,6 +65,8 @@ function transformCourse(course: SupabaseCourse): GolfCourse {
     email: course.email || undefined,
     website: course.website || undefined,
     verified: course.verified,
+    provider: course.provider || null,
+    provider_id: course.provider_id || null,
     data: course.data,
   };
 }

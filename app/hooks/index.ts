@@ -19,6 +19,7 @@ export { useUserAgent } from "./use-user-agent";
 export { useTheme } from "./use-theme";
 export { useLocale } from "./use-locale";
 export { useSafeArea } from "./use-safe-area";
+export { useTeeTimes } from "./use-tee-times";
 
 // Types
 export type * from "./types";

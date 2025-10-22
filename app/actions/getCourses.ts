@@ -23,6 +23,9 @@ export async function getCoursesNearSanDiego() {
       lat: course.lat,
       type: course.type,
       verified: course.verified,
+      website: course.website,
+      provider: course.provider,
+      provider_id: course.provider_id,
     }));
   } catch (error) {
     console.error('Failed to fetch courses:', error);
