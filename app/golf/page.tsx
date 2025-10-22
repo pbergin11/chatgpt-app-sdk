@@ -963,53 +963,291 @@ export default function GolfPage() {
                     ) : (
                       /* Expanded Layout (Selected) */
                       <>
-                        {/* Course Image */}
-                        <div 
-                          className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[16px]"
-                          style={{ height: displayMode === 'inline' ? '100px' : '120px' }}
-                        >
-                          <img
-                            src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
-                            alt={c.name}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Verified Badge - Top Left */}
-                          {c.verified && (
-                            <img
-                              src="/verfied_badge.png"
-                              alt="Golf.AI Verified"
-                              className="absolute top-0 left-2 w-11 h-14 drop-shadow-lg"
-                            />
-                          )}
-                          {/* Close Button - Top Right */}
-                          <button
-                            className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all group"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectCourse(c.id); // Deselect
-                            }}
-                            aria-label="Close"
-                          >
-                            <svg className="w-4 h-4 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          {/* Distance Badge - Moved down if verified badge present */}
-                          {typeof c.distance === "number" && (
-                            <div className={`absolute bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold ${
-                              c.verified ? 'top-16 left-2' : 'top-2 right-2'
-                            }`}>
-                              {c.distance} mi
+                        {displayMode === 'inline' ? (
+                          /* INLINE COMPACT LAYOUT */
+                          <div className="flex gap-2 p-2">
+                            {/* Left: Course Image */}
+                            <div 
+                              className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-lg flex-shrink-0"
+                              style={{ width: '100px', height: '100px' }}
+                            >
+                              <img
+                                src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
+                                alt={c.name}
+                                className="w-full h-full object-cover"
+                              />
+                              {c.verified && (
+                                <img
+                                  src="/verfied_badge.png"
+                                  alt="Golf.AI Verified"
+                                  className="absolute top-0 left-1 w-8 h-10 drop-shadow-lg"
+                                />
+                              )}
                             </div>
-                          )}
-                        </div>
 
-                        {/* Course Info */}
-                        <div className={displayMode === 'inline' ? 'p-2.5 text-left' : 'p-3 text-left'}>
+                            {/* Right: Course Info */}
+                            <div className="flex-1 flex flex-col min-w-0">
+                              {/* Close Button - Absolute Top Right */}
+                              <button
+                                className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1 hover:bg-white transition-all group z-10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectCourse(c.id);
+                                }}
+                                aria-label="Close"
+                              >
+                                <svg className="w-3.5 h-3.5 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+
+                              {/* Top Row: Name, Location, No Tee Times Badge */}
+                              <div className="flex items-start justify-between gap-2 mb-1 pr-8">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-sm text-[var(--color-ink-black)] line-clamp-1">
+                                    {c.name}
+                                  </h3>
+                                  <p className="text-xs text-[var(--color-ink-gray)]">
+                                    {c.city}{c.state ? `, ${c.state}` : ""}
+                                  </p>
+                                </div>
+                                {c.provider === 'teebox' && c.provider_id && teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess && (
+                                  <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-50 border border-orange-200 rounded flex-shrink-0">
+                                    <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="font-semibold text-[10px] text-orange-700 whitespace-nowrap">No Tee Times</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Second Row: Tags */}
+                              <div className="flex gap-1 flex-wrap mb-auto">
+                                {c.type && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-bg-cream)] text-black font-medium capitalize text-[10px]">
+                                    {c.type}
+                                  </span>
+                                )}
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-bg-cream)] text-black font-medium text-[10px]">
+                                  18 holes
+                                </span>
+                                {c.verified && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-accent-teal)]/10 text-[var(--color-accent-teal)] font-bold text-[10px]">
+                                    VERIFIED
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Bottom Row: Button (for no booking) OR Tee Times/Waitlist */}
+                              {c.provider === 'teebox' && c.provider_id ? (
+                                /* Tee Times or Waitlist Section for Inline */
+                                <div className="mt-2 w-full">
+                                  {loadingTeeTimes ? (
+                                    <div className="flex items-center justify-center py-2 gap-2">
+                                      <BlocksWaveIcon size={16} color="var(--color-primary-red)" />
+                                      <p className="text-[10px] text-[var(--color-ink-gray)]">Loading...</p>
+                                    </div>
+                                  ) : teeTimesData?.teetimes && teeTimesData.teetimes.length > 0 ? (
+                                    /* Inline Tee Times - Compact */
+                                    <div className="space-y-1">
+                                      {/* Date selector - compact */}
+                                      <div className="flex items-center justify-between gap-1 mb-1">
+                                        <button
+                                          className="p-0.5 hover:bg-gray-100 rounded transition disabled:opacity-30"
+                                          disabled={!!(selectedDate && selectedDate.toDateString() === new Date().toDateString())}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (selectedDate) {
+                                              const newDate = new Date(selectedDate);
+                                              newDate.setDate(newDate.getDate() - 1);
+                                              setSelectedDate(newDate);
+                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                            }
+                                          }}
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                          </svg>
+                                        </button>
+                                        <span className="text-[10px] font-semibold">
+                                          {selectedDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
+                                        <button
+                                          className="p-0.5 hover:bg-gray-100 rounded transition"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (selectedDate) {
+                                              const newDate = new Date(selectedDate);
+                                              newDate.setDate(newDate.getDate() + 1);
+                                              setSelectedDate(newDate);
+                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                            }
+                                          }}
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                      {/* Tee times - 2 rows max, horizontally scrollable */}
+                                      <div className="overflow-x-auto scrollbar-hide">
+                                        <div className="grid grid-flow-col auto-cols-max gap-1 pb-1" style={{ gridTemplateRows: 'repeat(2, minmax(0, 1fr))' }}>
+                                          {teeTimesData.teetimes.slice(0, 8).map((time: any, idx: number) => (
+                                            <button
+                                              key={idx}
+                                              className="px-2 py-1 bg-[var(--color-accent-teal)]/10 hover:bg-[var(--color-accent-teal)]/20 text-[var(--color-accent-teal)] rounded text-[10px] font-medium transition whitespace-nowrap"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (c.provider_id) {
+                                                  window.open(`https://foreupsoftware.com/index.php/booking/${c.provider_id}#/teetimes`, '_blank');
+                                                }
+                                              }}
+                                            >
+                                              {time.time}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess ? (
+                                    /* Inline Waitlist - Compact */
+                                    <div className="space-y-1">
+                                      {/* Date selector */}
+                                      <div className="flex items-center justify-between gap-1 mb-1">
+                                        <button
+                                          className="p-0.5 hover:bg-gray-100 rounded transition disabled:opacity-30"
+                                          disabled={!!(selectedDate && selectedDate.toDateString() === new Date().toDateString())}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (selectedDate) {
+                                              const newDate = new Date(selectedDate);
+                                              newDate.setDate(newDate.getDate() - 1);
+                                              setSelectedDate(newDate);
+                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                            }
+                                          }}
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                          </svg>
+                                        </button>
+                                        <span className="text-[10px] font-semibold">
+                                          {selectedDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
+                                        <button
+                                          className="p-0.5 hover:bg-gray-100 rounded transition"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (selectedDate) {
+                                              const newDate = new Date(selectedDate);
+                                              newDate.setDate(newDate.getDate() + 1);
+                                              setSelectedDate(newDate);
+                                              if (c.provider_id) fetchTeeTimes(c.provider_id, newDate.toISOString().split('T')[0], teeTimeFilters);
+                                            }
+                                          }}
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                          </svg>
+                                        </button>
+                                      </div>
+                                      {/* Compact waitlist form */}
+                                      <div className="space-y-1">
+                                        <p className="text-[9px] text-[var(--color-ink-gray)]">Join waitlist to get notified</p>
+                                        <div className="grid grid-cols-2 gap-1">
+                                          <input
+                                            type="email"
+                                            value={waitlistData.email}
+                                            onChange={(e) => setWaitlistData(prev => ({ ...prev, email: e.target.value }))}
+                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded"
+                                            placeholder="Email"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                          <input
+                                            type="time"
+                                            value={waitlistData.timeStart}
+                                            onChange={(e) => setWaitlistData(prev => ({ ...prev, timeStart: e.target.value }))}
+                                            className="px-1.5 py-1 text-[10px] border border-gray-300 rounded"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        </div>
+                                        <button
+                                          className="w-full px-2 py-1 bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (c.provider_id) handleWaitlistSubmit(c.id, c.provider_id);
+                                          }}
+                                          disabled={!waitlistData.email}
+                                        >
+                                          Join Waitlist
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                /* No booking - just website button */
+                                c.website && (
+                                  <button
+                                    className="w-full bg-[var(--color-primary-red)] text-white rounded text-[10px] font-semibold hover:opacity-90 transition cursor-pointer px-2 py-1.5 mt-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(c.website!, '_blank');
+                                    }}
+                                  >
+                                    Visit Website
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          /* FULLSCREEN LAYOUT - Keep existing */
+                          <>
+                            {/* Course Image */}
+                            <div 
+                              className="relative bg-gradient-to-br from-[var(--color-accent-teal)] to-[var(--color-primary-red)] overflow-hidden rounded-t-[16px]"
+                              style={{ height: '120px' }}
+                            >
+                              <img
+                                src={`https://i.postimg.cc/dVhLc1DR/Generated-Image-October-16-2025-3-01-PM.png`}
+                                alt={c.name}
+                                className="w-full h-full object-cover"
+                              />
+                              {c.verified && (
+                                <img
+                                  src="/verfied_badge.png"
+                                  alt="Golf.AI Verified"
+                                  className="absolute top-0 left-2 w-11 h-14 drop-shadow-lg"
+                                />
+                              )}
+                              <button
+                                className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all group"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectCourse(c.id);
+                                }}
+                                aria-label="Close"
+                              >
+                                <svg className="w-4 h-4 text-[var(--color-ink-black)] group-hover:text-[var(--color-primary-red)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                              {typeof c.distance === "number" && (
+                                <div className={`absolute bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-black font-semibold ${
+                                  c.verified ? 'top-16 left-2' : 'top-2 right-2'
+                                }`}>
+                                  {c.distance} mi
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Course Info */}
+                            <div className="p-3 text-left">
                           {/* Header with No Tee Times message if applicable */}
                           <div className="flex items-start justify-between gap-3 mb-1">
                             <div className="flex-1 min-w-0">
-                              <h3 className={`font-bold text-[var(--color-ink-black)] mb-1 line-clamp-1 ${displayMode === 'inline' ? 'text-sm' : 'text-lg'}`}>
+                              <h3 className="font-bold text-lg text-[var(--color-ink-black)] mb-1 line-clamp-1">
                                 {c.name}
                               </h3>
                               <p className="text-[var(--color-ink-gray)] text-xs mb-2">
@@ -1042,7 +1280,7 @@ export default function GolfPage() {
                           </div>
 
                           {/* Tags */}
-                          <div className={`flex gap-1.5 flex-wrap ${displayMode === 'inline' ? 'mb-1.5' : 'mb-2'}`}>
+                          <div className="flex gap-1.5 flex-wrap mb-2">
                             {c.type && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium capitalize text-xs">
                                 {c.type}
@@ -1390,12 +1628,12 @@ export default function GolfPage() {
                                             onChange={(value) => setWaitlistData(prev => ({ ...prev, phone: value || '' }))}
                                             className="w-full"
                                             style={{
-                                              '--PhoneInputCountryFlag-borderColor text-black': 'transparent',
+                                              '--PhoneInputCountryFlag-borderColor': 'transparent',
                                             } as any}
                                             inputComponent={(props: any) => (
                                               <input
                                                 {...props}
-                                                className="w-full px-2.5 py-2 text-xs text-black border border-gray-300 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] focus:border-transparent placeholder:text-gray-500"
+                                                className="w-full px-2.5 py-2 text-xs border border-gray-300 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-red)] focus:border-transparent placeholder:text-gray-500"
                                                 onClick={(e: any) => e.stopPropagation()}
                                               />
                                             )}
@@ -1448,7 +1686,7 @@ export default function GolfPage() {
                           {/* Action Button - Only show if no TeeBox provider */}
                           {(!c.provider || c.provider !== 'teebox') && (
                             <button
-                              className={`w-full bg-[var(--color-primary-red)] text-white rounded-[8px] font-medium hover:opacity-90 transition cursor-pointer ${displayMode === 'inline' ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
+                              className="w-full bg-[var(--color-primary-red)] text-white rounded-[8px] font-medium hover:opacity-90 transition cursor-pointer px-3 py-2 text-sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (c.website) {
@@ -1462,6 +1700,8 @@ export default function GolfPage() {
                             </button>
                           )}
                         </div>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
