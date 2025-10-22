@@ -165,6 +165,7 @@ const handler = createMcpHandler(async (server) => {
                 "https://api.mapbox.com",
                 "https://events.mapbox.com",
                 "https://i.postimg.cc",
+                // Note: Geocoding API calls happen server-side, not from widget
               ],
               resource_domains: [
                 "https://chatgpt-app-sdk.vercel.app",
@@ -214,12 +215,12 @@ const handler = createMcpHandler(async (server) => {
     "search_courses_by_area",
     {
       title: "Search Golf Courses by Area",
-      description: "Search for golf courses by location. You can search by: (1) State only (e.g., 'CA', 'AZ') for all courses in a US state, (2) Country only (e.g., 'United Kingdom', 'Australia') for international courses, or (3) City + State/Country for specific city results. Supports extensive filtering by price, amenities, availability, and more.",
+      description: "Use this tool to search for golf courses by location with powerful filtering capabilities. Golf.ai has the world's most comprehensive golf course database with real-time data. LOCATION FORMATS: (1) USA State-only: state='CA' (all California courses), (2) USA City+State: city='San Diego', state='CA' (uses 25-mile radius + exact matches), (3) International Country-only: country='Australia' (all Australian courses), (4) International City+Country: city='Sydney', country='Australia' (uses 25-mile radius + exact matches). RADIUS: Automatically applied for city searches to catch nearby courses outside city limits. FILTERS: Supports 40+ filters including price, amenities (spa, range, lodging), course attributes (yardage, par, slope), availability by date/time, designer, certifications, and deep JSONB queries. Use this for ANY golf course search question.",
       inputSchema: {
-        city: z.string().optional().describe("City name (optional - omit to search entire state/country)"),
-        state: z.string().optional().describe("State code for USA locations (e.g., 'CA', 'AZ', 'FL'). Can be used alone to get all courses in the state."),
-        country: z.string().optional().describe("Country name for international locations (e.g., 'United Kingdom', 'Australia'). Can be used alone to get all courses in the country."),
-        radius: z.number().int().min(1).max(200).optional().describe("Search radius in miles (default 50, not yet implemented)"),
+        city: z.string().optional().describe("City name (e.g., 'San Diego', 'Sydney', 'London'). When provided with radius, uses geocoding to find courses within radius of city center."),
+        state: z.string().optional().describe("USA state code ONLY (e.g., 'CA', 'FL', 'TX'). Use for USA locations. Can be used alone to get all courses in the state, or with city for city+state search."),
+        country: z.string().optional().describe("Country name for international locations (e.g., 'Australia', 'United Kingdom', 'Canada'). Use for non-USA locations. Can be used alone for country-wide search, or with city for city+country search."),
+        radius: z.number().int().min(1).max(200).optional().describe("Search radius in miles from city center (default: 25 for city searches, unused for state/country searches). Uses geocoding + PostGIS geospatial queries to find courses within radius."),
         filters: z.object({
           // Course type filter
           type: z.enum(["public", "private", "semi-private", "resort"]).optional().describe("Course type"),
@@ -295,7 +296,9 @@ const handler = createMcpHandler(async (server) => {
         "openai/toolInvocation/invoked": "Courses found",
       },
     },
-    async ({ city, state, country, radius = 50, filters = {} }, extra) => {
+    async ({ city, state, country, radius, filters = {} }, extra) => {
+      // Set default radius for city searches
+      const effectiveRadius = city && radius === undefined ? 25 : radius;
       const startTime = performance.now();
       log.basic("🔍 search_courses_by_area called");
       log.basic("  Input:", { city, state, country, radius, filters });
@@ -363,8 +366,8 @@ const handler = createMcpHandler(async (server) => {
         effectiveFilters.date = matchedDate;
       }
 
-      // Search courses using Supabase
-      const courses = await searchCoursesByArea(city, state, country, radius, effectiveFilters);
+      // Search courses using Supabase (with geocoding + geospatial if city+radius)
+      const courses = await searchCoursesByArea(city, state, country, effectiveRadius, effectiveFilters);
 
       // Format location string for response
       const locationStr = getLocationDescription(city, state, country);
@@ -411,7 +414,7 @@ const handler = createMcpHandler(async (server) => {
             city, 
             state, 
             country, 
-            radius, 
+            radius: effectiveRadius, 
             filters: effectiveFilters, 
             timestamp: new Date().toISOString(),
             total_results: courses.length,
@@ -434,12 +437,12 @@ const handler = createMcpHandler(async (server) => {
     "get_course_details",
     {
       title: "Get Golf Course Details",
-      description: "Get comprehensive information about a specific golf course. You can search by course ID, or by course name with state (USA) or country (international). Returns all details including amenities, pricing, availability, contact info, and more. Use this for ANY question about a specific course.",
+      description: "Use this tool to get detailed information about a specific golf course. Returns comprehensive data including: course details (holes, par, yardage, slope, rating), pricing (walk rates, cart rates, twilight/senior/junior discounts), amenities (range, spa, lodging, restaurant, pro shop), practice facilities (range hours by day, putting green, chipping area), policies (dress code, pace of play, alcohol, pets), programs (memberships, junior programs, leagues), tournaments hosted, contact info, booking links, and more. SEARCH OPTIONS: (1) By ID if you already have it from a previous search, OR (2) By name + location (state for USA, country for international). Use this for questions like 'Tell me about Pebble Beach', 'What are the rates at Torrey Pines?', 'Does Augusta National allow walking?', etc.",
       inputSchema: {
-        courseId: z.string().optional().describe("Unique course identifier (e.g., 'torrey-pines-south')"),
-        name: z.string().optional().describe("Course name (partial match supported)"),
-        state: z.string().optional().describe("State code for USA courses (e.g., 'CA', 'AZ')"),
-        country: z.string().optional().describe("Country name for international courses"),
+        courseId: z.string().optional().describe("Unique course identifier from previous search results (e.g., 'torrey-pines-south', 'pebble-beach'). Use this if you already have the course ID."),
+        name: z.string().optional().describe("Course name for lookup (partial match supported, e.g., 'Pebble Beach', 'Torrey Pines', 'St Andrews'). Required if courseId not provided."),
+        state: z.string().optional().describe("USA state code for disambiguation (e.g., 'CA', 'FL'). Use with name for USA courses."),
+        country: z.string().optional().describe("Country name for disambiguation (e.g., 'Australia', 'Scotland'). Use with name for international courses."),
       },
       annotations: {
         readOnlyHint: true,

@@ -6,6 +6,7 @@
  */
 
 import { supabase, type SupabaseCourse } from './supabase';
+import { geocodeLocation } from './geocoding';
 
 // Default course image (since we don't have images in DB yet)
 const DEFAULT_COURSE_IMAGE = 'https://i.postimg.cc/9FLqXqYZ/golf-course-default.jpg';
@@ -67,6 +68,12 @@ function transformCourse(course: SupabaseCourse): GolfCourse {
 
 /**
  * Search courses by location
+ * Supports:
+ * - State-only (USA): searchCoursesByArea(undefined, 'CA', undefined)
+ * - Country-only: searchCoursesByArea(undefined, undefined, 'Australia')
+ * - City + State (USA): searchCoursesByArea('San Diego', 'CA', undefined)
+ * - City + Country (International): searchCoursesByArea('Sydney', undefined, 'Australia')
+ * - Radius search: Uses geocoding + PostGIS for courses within radius
  */
 export async function searchCoursesByArea(
   city?: string,
@@ -81,21 +88,69 @@ export async function searchCoursesByArea(
       .select('*')
       .eq('status', 'open');
 
-    // Location filtering
-    if (state && !city && !country) {
-      // State-only search (USA)
-      query = query.eq('state', state.toUpperCase());
-    } else if (country && !city && !state) {
-      // Country-only search
-      query = query.eq('country', country);
-    } else if (city) {
-      // City search (with optional state/country)
-      query = query.ilike('city', `%${city}%`);
-      if (state) {
-        query = query.eq('state', state.toUpperCase());
+    // Determine if we need geospatial search
+    let useGeospatial = false;
+    let centerLat: number | undefined;
+    let centerLon: number | undefined;
+
+    // Location filtering strategy:
+    // 1. If city is provided, try geocoding + radius search (catches nearby courses)
+    // 2. Otherwise, use exact state/country match
+    if (city && radius && radius > 0) {
+      // Geocode the location to get center point
+      const geocoded = await geocodeLocation(city, state, country);
+      if (geocoded) {
+        useGeospatial = true;
+        centerLat = geocoded.lat;
+        centerLon = geocoded.lon;
+        console.log(`[Geocoding] ${city} → (${centerLat}, ${centerLon})`);
       }
-      if (country) {
+    }
+
+    if (useGeospatial && centerLat && centerLon && radius) {
+      // Use PostGIS radius search
+      // ST_DWithin uses meters, so convert miles to meters
+      const radiusMeters = radius * 1609.34;
+      
+      // Use RPC function for geospatial query (more efficient)
+      // Note: This requires a custom Postgres function - fallback to exact match if not available
+      const { data: geoData, error: geoError } = await supabase.rpc('search_courses_within_radius', {
+        search_lat: centerLat,
+        search_lon: centerLon,
+        radius_meters: radiusMeters,
+      });
+
+      if (geoError) {
+        console.warn('Geospatial search failed, falling back to exact match:', geoError.message);
+        // Fallback to exact city match
+        query = query.ilike('city', `%${city}%`);
+        if (state) query = query.eq('state', state.toUpperCase());
+        if (country) query = query.eq('country', country);
+      } else if (geoData) {
+        // Use geospatial results - filter by IDs
+        const courseIds = geoData.map((c: any) => c.id);
+        if (courseIds.length === 0) {
+          return []; // No courses found in radius
+        }
+        query = query.in('id', courseIds);
+      }
+    } else {
+      // Exact location match (no radius)
+      if (state && !city && !country) {
+        // State-only search (USA)
+        query = query.eq('state', state.toUpperCase());
+      } else if (country && !city && !state) {
+        // Country-only search
         query = query.eq('country', country);
+      } else if (city) {
+        // City search (with optional state/country)
+        query = query.ilike('city', `%${city}%`);
+        if (state) {
+          query = query.eq('state', state.toUpperCase());
+        }
+        if (country) {
+          query = query.eq('country', country);
+        }
       }
     }
 
@@ -172,6 +227,29 @@ export async function searchCoursesByArea(
       // Special handling for has_range (check multiple amenity names)
       if (filters.has_range === true) {
         query = query.or('amenities.cs.{driving_range},amenities.cs.{range}');
+      }
+
+      // Additional amenity filters
+      if (filters.restaurant === true) {
+        query = query.contains('amenities', ['restaurant']);
+      }
+      if (filters.bar === true) {
+        query = query.contains('amenities', ['bar']);
+      }
+      if (filters.golf_lessons === true) {
+        query = query.contains('amenities', ['lessons']);
+      }
+      if (filters.putting_green === true) {
+        query = query.contains('amenities', ['practice_putting_green']);
+      }
+      if (filters.event_space === true) {
+        query = query.contains('amenities', ['event_space']);
+      }
+      if (filters.practice_bunker === true) {
+        query = query.contains('amenities', ['practice_bunker']);
+      }
+      if (filters.chipping_green === true) {
+        query = query.contains('amenities', ['chipping_area']);
       }
 
       // Text search
