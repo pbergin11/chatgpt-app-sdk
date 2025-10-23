@@ -553,12 +553,10 @@ export default function GolfPage() {
       const course = coursesWithAvailability.find((c: any) => c.id === id);
       
       // If course has TeeBox provider, fetch tee times
+      // Initial fetch without filters - user can apply filters after card opens
       if ((course?.provider === 'teebox' || course?.provider === 'teefox') && course?.provider_id && selectedDate) {
         const dateStr = selectedDate.toISOString().split('T')[0];
-        fetchTeeTimes(course.provider_id, dateStr, {
-          patrons: teeTimeFilters.patrons,
-          holes: teeTimeFilters.holes,
-        });
+        fetchTeeTimes(course.provider_id, dateStr);
       }
       
       // Fetch details via MCP
@@ -1234,14 +1232,22 @@ export default function GolfPage() {
                                               hour12: true,
                                               timeZone: teeTime.timezone // Use the course's timezone
                                             });
+                                            // Format price for tooltip
+                                            const priceStr = teeTime.pricePerPatron 
+                                              ? `$${(teeTime.pricePerPatron / 100).toFixed(2)} per person`
+                                              : 'Price not available';
                                             return (
                                               <button
                                                 key={idx}
                                                 className="px-2 py-1 bg-[#E8F5E9] hover:bg-[#C8E6C9] text-[var(--color-ink-black)] rounded text-[10px] font-medium transition whitespace-nowrap"
+                                                title={priceStr}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   if (teeTime.bookingUrl) {
-                                                    window.open(teeTime.bookingUrl, '_blank');
+                                                    const url = teeTime.bookingUrl.startsWith('http') 
+                                                      ? teeTime.bookingUrl 
+                                                      : `https://${teeTime.bookingUrl}`;
+                                                    window.open(url, '_blank');
                                                   }
                                                 }}
                                               >
@@ -1670,13 +1676,21 @@ export default function GolfPage() {
                                         hour12: true,
                                         timeZone: teeTime.timezone // Use the course's timezone
                                       });
+                                      // Format price for tooltip
+                                      const priceStr = teeTime.pricePerPatron 
+                                        ? `$${(teeTime.pricePerPatron / 100).toFixed(2)} per person`
+                                        : 'Price not available';
                                       return (
                                         <button
                                           key={idx}
                                           className="px-2 py-1.5 bg-[#E8F5E9] hover:bg-[#C8E6C9] text-[var(--color-ink-black)] rounded-md text-xs font-medium transition-colors cursor-pointer"
+                                          title={priceStr}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            window.open(teeTime.bookingUrl, '_blank');
+                                            const url = teeTime.bookingUrl.startsWith('http') 
+                                              ? teeTime.bookingUrl 
+                                              : `https://${teeTime.bookingUrl}`;
+                                            window.open(url, '_blank');
                                           }}
                                         >
                                           {timeStr}

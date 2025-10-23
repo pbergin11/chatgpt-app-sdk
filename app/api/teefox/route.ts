@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
       headers: {
         'x-api-key': apiKey,
       },
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 
     if (!response.ok) {
@@ -103,14 +105,31 @@ export async function GET(request: NextRequest) {
 
     const data: TeeFoxResponse = await response.json();
     
-    console.log(`[TeeBox] Found ${data.meta.totalTeetimes} tee times for ${location_id} on ${date}`);
+    if (data.meta.totalTeetimes === 0) {
+      console.log(`[TeeBox] No tee times found for ${location_id} on ${date}`);
+      console.log('[TeeBox] Full API Response:', JSON.stringify(data, null, 2));
+    } else {
+      console.log(`[TeeBox] Found ${data.meta.totalTeetimes} tee times for ${location_id} on ${date}`);
+    }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('[TeeBox] Error fetching tee times:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch tee times' },
-      { status: 500 }
-    );
+    console.error('[TeeBox] Error fetching tee times:', {
+      location_id,
+      date,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    
+    // Return empty result instead of error to prevent UI breaking
+    return NextResponse.json({
+      meta: {
+        totalTeetimes: 0,
+        nextPageToken: null,
+        coursesSearched: 0,
+        totalCourses: 0,
+        remainingCourses: 0,
+      },
+      teetimes: [],
+    });
   }
 }

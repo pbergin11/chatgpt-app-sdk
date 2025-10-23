@@ -36,10 +36,20 @@ export function useTeeTimes() {
         params.append('holes', `[${options.holes}]`);
       }
       
-      const response = await fetch(`/api/teefox?${params.toString()}`);
+      const response = await fetch(`/api/teefox?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
         throw new Error(errorData.error || 'Failed to fetch tee times');
       }
 
@@ -49,8 +59,26 @@ export function useTeeTimes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      console.error('[useTeeTimes] Error:', err);
-      return null;
+      console.error('[useTeeTimes] Error fetching tee times:', {
+        locationId,
+        date,
+        options,
+        error: err,
+      });
+      
+      // Return empty result instead of null to prevent UI breaking
+      const emptyResult: TeeFoxResponse = {
+        meta: {
+          totalTeetimes: 0,
+          nextPageToken: null,
+          coursesSearched: 0,
+          totalCourses: 0,
+          remainingCourses: 0,
+        },
+        teetimes: [],
+      };
+      setData(emptyResult);
+      return emptyResult;
     } finally {
       setLoading(false);
     }
