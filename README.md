@@ -149,3 +149,97 @@ The configuration automatically handles:
 - Production URLs via `VERCEL_PROJECT_PRODUCTION_URL`
 - Preview/branch URLs via `VERCEL_BRANCH_URL`
 - Asset prefixing for correct resource loading in iframes
+
+---
+
+# Golf.ai Addendum
+
+This starter has been extended into a Golf.ai Explorer that integrates a live map UI, booking provider lookups, and MCP tools. Below is everything you need to run and develop the Golf.ai features.
+
+## Key Features
+
+- **Golf Explorer UI** in `app/golf/page.tsx`
+- **MCP tools** in `app/mcp/route.ts` for course search and details
+- **Tee time fetching** via `app/api/teefox/route.ts` and the `useTeeTimes()` hook
+- **Mapbox map** with custom markers and availability colors
+- **Inline and fullscreen layouts** with shared behaviors
+
+## Environment Variables
+
+Create `.env.local` and set the following:
+
+```
+NEXT_PUBLIC_MAPBOX_TOKEN=your-mapbox-token
+TEEFOX_API=your-teefox-api-key
+LOG_MCP=basic                 # optional: basic|full|verbose
+```
+
+If your data layer is backed by Supabase (see `lib/golfData.ts`):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+## MCP Tools (app/mcp/route.ts)
+
+- **Resources**
+  - Registers `ui://widget/golf.html` with cache-busting version and CSP:
+    - `connect_domains`: `api.mapbox.com`, `events.mapbox.com`, `i.postimg.cc`
+    - `resource_domains`: `api.mapbox.com`, `i.postimg.cc`
+- **Tools**
+  - `search_courses_by_area(city?, state?, country?, radius?, filters?)`
+  - `get_course_details(courseId? | name+location)`
+  - `book_tee_time(courseId, date?, time?, players?)`
+- Enable structured widget rendering via OpenAI-specific `_meta` fields.
+
+## Tee Times Flow
+
+- API route: `GET /api/teefox` implemented in `app/api/teefox/route.ts`
+  - Required: `location_id`, `date` (YYYY-MM-DD)
+  - Optional: `patrons="[1]"`, `holes="[9]"`
+  - Uses `TEEFOX_API` header `x-api-key`
+  - 10s timeout via `AbortSignal.timeout(10000)`
+  - 404 returns an empty list; when `totalTeetimes === 0` the full response is logged for debugging
+
+- Hook: `app/hooks/use-tee-times.ts`
+  - `fetchTeeTimes(locationId, date, { patrons?, holes? })`
+  - Robust error handling; on failure it returns `{ meta, teetimes: [] }` to avoid UI breakage
+
+## UI Behaviors (app/golf/page.tsx)
+
+- **Initial fetch without filters**: On first card open, we call `fetchTeeTimes(locationId, date)` with no patrons/holes. Filters are applied only after the user changes them.
+- **Filter controls**: Players and holes dropdowns trigger refetch with selected values.
+- **Price tooltips**: Hovering a tee time shows a tooltip with `pricePerPatron` (e.g., `$89.00 per person`).
+- **Booking URLs**: If a `bookingUrl` lacks protocol, `https://` is prepended before `window.open(...)`.
+- **Provider handling**: Both `teebox` and `teefox` indicate a bookable provider throughout the UI (badges, widths, fetching, etc.).
+- **Marker colors** (`getMarkerColor()`):
+  - No provider → black marker
+  - With provider → deterministic color from a spectrum based on course ID hash
+- **Card centering**: When a card expands, we smooth-scroll so its center aligns with the screen center.
+- **Hosted assets**: Verified badge and logos use CDN URLs, not local files:
+  - Verified: `https://i.postimg.cc/WbqRWDPb/verfied-badge.png`
+  - Inline logo: `https://i.postimg.cc/q709vj6t/logo-inline.jpg`
+  - Fullscreen logo: `https://i.postimg.cc/4dxqzy5V/logo-fullscreen.jpg`
+
+## Files of Interest
+
+- **UI**: `app/golf/page.tsx`
+- **MCP**: `app/mcp/route.ts`
+- **Tee Times Hook**: `app/hooks/use-tee-times.ts`
+- **API Route**: `app/api/teefox/route.ts`
+- **Data Layer**: `lib/golfData.ts`
+
+## Known Issues & Tips
+
+- **Favicon conflict**: If you see “conflicting public file and page file for path /favicon.ico”, ensure you only have a single favicon, either `public/favicon.ico` or `app/favicon.ico` (remove one).
+- **Missing protocol on booking URLs**: Handled in the UI (we prepend `https://`), but providers should ideally include full URLs.
+- **Local development**: In local mode `window.openai` is undefined; the UI still renders and interactions work, but MCP-driven widget state is a no-op.
+
+## Testing Notes
+
+- Inspect console logs for:
+  - `[TeeBox] Fetching tee times: ...`
+  - `No tee times found ...` and the full response payload when empty
+  - MCP logs controlled by `LOG_MCP`
+

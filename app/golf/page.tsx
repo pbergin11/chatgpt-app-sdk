@@ -1,5 +1,4 @@
-"use client";
-
+  "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -59,6 +58,13 @@ type GolfWidgetState = {
   selectedCourseId?: string;
 };
 
+function StaticMapFallback({ token, center, zoom }: { token: string; center: [number, number]; zoom: number }) {
+  const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${center[0]},${center[1]},${zoom},0/1280x800@2x?access_token=${token}`;
+  return (
+    <img src={url} alt="Map" className="h-full w-full object-cover" />
+  );
+}
+
 export default function GolfPage() {
   const toolOutputRaw = useWidgetProps<{
     courses?: CoursePoint[];
@@ -66,14 +72,17 @@ export default function GolfPage() {
     searchContext?: { matched_date?: string | null };
   }>();
 
+  // Detect ChatGPT iframe environment early so we avoid cross-origin Server Actions
+  const hasOpenAI = typeof window !== 'undefined' && !!(window as any).openai;
+
   // State for local development data
   const [localCourses, setLocalCourses] = useState<CoursePoint[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
 
   // For local debugging: Load San Diego courses from Supabase if no tool output
   useEffect(() => {
-    // Only load local data if we don't have tool output and haven't loaded yet
-    if (!toolOutputRaw?.courses && !toolOutputRaw?.course && localCourses.length === 0 && !isLoadingLocal) {
+    // Only load local data for localhost development (not inside ChatGPT iframe)
+    if (!hasOpenAI && !toolOutputRaw?.courses && !toolOutputRaw?.course && localCourses.length === 0 && !isLoadingLocal) {
       setIsLoadingLocal(true);
       getCoursesNearSanDiego()
         .then((courses: any[]) => {
@@ -88,7 +97,7 @@ export default function GolfPage() {
           setIsLoadingLocal(false);
         });
     }
-  }, [toolOutputRaw, localCourses.length, isLoadingLocal]);
+  }, [hasOpenAI, toolOutputRaw, localCourses.length, isLoadingLocal]);
 
   const toolOutput = useMemo(() => {
     if (toolOutputRaw?.courses || toolOutputRaw?.course) {
@@ -105,10 +114,6 @@ export default function GolfPage() {
     __v: 1,
     viewport: { center: [-117.1611, 32.7157], zoom: 10 }, // default San Diego
   }));
-
-  // Check if window.openai exists
-  const hasOpenAI = typeof window !== 'undefined' && !!(window as any).openai;
-
   const displayModeFromSDK = useDisplayMode();
   const rawMaxHeight = useMaxHeight() ?? undefined;
   const requestDisplayMode = useRequestDisplayMode();
@@ -135,6 +140,8 @@ export default function GolfPage() {
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const [noToken, setNoToken] = useState(false);
+  const [noWebGL, setNoWebGL] = useState(false);
+  const [workerReady, setWorkerReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
@@ -142,6 +149,10 @@ export default function GolfPage() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   
+  useEffect(() => {
+    setWorkerReady(true);
+  }, []);
+
   // Tee times state
   const { loading: loadingTeeTimes, error: teeTimesError, data: teeTimesData, fetchTeeTimes } = useTeeTimes();
   console.log('teetimesdata', teeTimesData)
@@ -311,8 +322,17 @@ export default function GolfPage() {
         return;
       }
 
+      if (!workerReady) {
+        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
       if (!token) {
         setNoToken(true);
+        return;
+      }
+      if (!mapboxgl.supported({ failIfMajorPerformanceCaveat: false })) {
+        setNoWebGL(true);
         return;
       }
       mapboxgl.accessToken = token;
@@ -371,7 +391,7 @@ export default function GolfPage() {
         mapRef.current = null;
       }
     };
-  }, [setState, token]);
+  }, [setState, token, workerReady]);
 
   // Add custom markers when courses change
   useEffect(() => {
@@ -666,6 +686,8 @@ export default function GolfPage() {
           <div className="h-full w-full flex items-center justify-center text-sm text-[var(--color-ink-gray)] p-6 bg-[var(--color-bg-cream)]">
             Mapbox token missing. Set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your environment to enable the map.
           </div>
+        ) : noWebGL ? (
+          <StaticMapFallback token={token} center={state?.viewport?.center ?? [-117.1611, 32.7157]} zoom={state?.viewport?.zoom ?? 10} />
         ) : (
           <div ref={mapContainer} className="h-full w-full" />
         )}
