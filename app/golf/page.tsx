@@ -297,64 +297,79 @@ export default function GolfPage() {
   }, [userAgent, displayMode]);
 
   useEffect(() => {
-    if (!mapContainer.current) return;
-    if (mapRef.current) return; // init once
+    if (mapRef.current) return;
 
-    if (!token) {
-      setNoToken(true);
-      return;
-    }
-    mapboxgl.accessToken = token;
+    let disposed = false;
+    let raf = 0 as number | undefined;
 
-    // If we already have course points, start the map with their bounds so the first frame is correct
-    const initPts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
-    const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
-    const baseOptions: mapboxgl.MapboxOptions = {
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+    const tryInit = () => {
+      if (disposed || mapRef.current) return;
+
+      const el = mapContainer.current;
+      if (!el || !(el instanceof HTMLElement) || !el.isConnected) {
+        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
+      if (!token) {
+        setNoToken(true);
+        return;
+      }
+      mapboxgl.accessToken = token;
+
+      const initPts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
+      const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
+      const baseOptions: mapboxgl.MapboxOptions = {
+        container: el,
+        style: "mapbox://styles/mapbox/streets-v12",
+      };
+      const map = new mapboxgl.Map(
+        initPts.length > 0
+          ? {
+              ...baseOptions,
+              bounds:
+                initPts.length === 1
+                  ? new mapboxgl.LngLatBounds(
+                      [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
+                      [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
+                    )
+                  : initPts.reduce((b, p, i) => {
+                      if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
+                      return b.extend([p.lon!, p.lat!]);
+                    }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
+              fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
+            }
+          : {
+              ...baseOptions,
+              center: state?.viewport?.center ?? [-117.1611, 32.7157],
+              zoom: state?.viewport?.zoom ?? 10,
+            }
+      );
+      mapRef.current = map;
+
+      map.on("moveend", () => {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        setState((prev) => ({
+          ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }),
+          viewport: { center: [center.lng, center.lat], zoom },
+        }));
+      });
+
+      map.on("load", () => {
+        map.resize();
+      });
     };
-    const map = new mapboxgl.Map(
-      initPts.length > 0
-        ? {
-            ...baseOptions,
-            bounds:
-              initPts.length === 1
-                ? new mapboxgl.LngLatBounds(
-                    [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
-                    [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
-                  )
-                : initPts.reduce((b, p, i) => {
-                    if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
-                    return b.extend([p.lon!, p.lat!]);
-                  }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
-            fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
-          }
-        : {
-            ...baseOptions,
-            center: state?.viewport?.center ?? [-117.1611, 32.7157],
-            zoom: state?.viewport?.zoom ?? 10,
-          }
-    );
-    mapRef.current = map;
 
-    map.on("moveend", () => {
-      const center = map.getCenter();
-      const zoom = map.getZoom();
-      setState((prev) => ({
-        ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }),
-        viewport: { center: [center.lng, center.lat], zoom },
-      }));
-    });
-
-    map.on("load", () => {
-      // Ensure internal size is correct in case container changed
-      map.resize();
-      // Markers and bounds fitting are handled in separate effects (and also scheduled on load)
-    });
+    tryInit();
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      disposed = true;
+      if (raf) cancelAnimationFrame(raf);
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [setState, token]);
 
@@ -907,7 +922,7 @@ export default function GolfPage() {
                       isSelected 
                         ? "" 
                         : "hover:translate-y-[-2px]"
-                    } ${dimForNoAvail ? "opacity-60" : ""}`}
+                    } ${dimForNoAvail ? "opacity-100" : ""}`}
                     style={{ 
                       width: `${cardWidth}px`,
                       transformOrigin: 'bottom center'
