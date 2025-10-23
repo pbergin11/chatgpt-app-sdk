@@ -238,29 +238,20 @@ export default function GolfPage() {
   const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
   
   const getMarkerColor = (c: any) => {
-    const score = c?.availabilityScore ?? 0;
-    const max = maxAvailabilityScore || 1;
+    // If no provider, return black
+    if (!c?.provider || !c?.provider_id) {
+      return '#000000';
+    }
     
-    // Normalize score to 0-1 range (higher score = more available = greener)
-    const normalizedScore = max > 0 ? Math.min(1, Math.max(0, score / max)) : 0;
+    // For courses with provider, use random color allocation
+    // Create a deterministic "random" color based on course ID
+    const hash = c.id.split('').reduce((acc: number, char: string) => {
+      return char.charCodeAt(0) + ((acc << 5) - acc);
+    }, 0);
     
-    // Map to color spectrum (0 = red, 1 = green)
-    const segmentCount = COLOR_SPECTRUM.length - 1;
-    const position = normalizedScore * segmentCount;
-    const segmentIndex = Math.min(Math.floor(position), segmentCount - 1);
-    const segmentT = position - segmentIndex;
-    
-    // Interpolate between two adjacent colors in the spectrum
-    // Note: We reverse the array so green is at the top (high scores)
-    const reversedSpectrum = [...COLOR_SPECTRUM].reverse();
-    const colorFrom = hexToRgb(reversedSpectrum[segmentIndex]);
-    const colorTo = hexToRgb(reversedSpectrum[segmentIndex + 1]);
-    
-    return rgbToHex(
-      mix(colorFrom.r, colorTo.r, segmentT),
-      mix(colorFrom.g, colorTo.g, segmentT),
-      mix(colorFrom.b, colorTo.b, segmentT)
-    );
+    // Use hash to pick a color from the spectrum
+    const colorIndex = Math.abs(hash) % COLOR_SPECTRUM.length;
+    return COLOR_SPECTRUM[colorIndex];
   };
 
   // Track when courses are loaded
@@ -562,7 +553,7 @@ export default function GolfPage() {
       const course = coursesWithAvailability.find((c: any) => c.id === id);
       
       // If course has TeeBox provider, fetch tee times
-      if (course?.provider === 'teebox' && course?.provider_id && selectedDate) {
+      if ((course?.provider === 'teebox' || course?.provider === 'teefox') && course?.provider_id && selectedDate) {
         const dateStr = selectedDate.toISOString().split('T')[0];
         fetchTeeTimes(course.provider_id, dateStr, {
           patrons: teeTimeFilters.patrons,
@@ -895,7 +886,7 @@ export default function GolfPage() {
                 
                 // Calculate width based on whether this specific card has TeeBox provider
                 const cardWidth = isSelected 
-                  ? (c.provider === 'teebox' && c.provider_id 
+                  ? ((c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id 
                       ? (displayMode === 'inline' ? 600 : 600) 
                       : (displayMode === 'inline' ? 280 : 320))
                   : 280;
@@ -986,7 +977,7 @@ export default function GolfPage() {
                               <span className="px-2 py-0.5 rounded-md bg-[var(--color-bg-cream)] text-black font-medium text-xs capitalize">{c.type}</span>
                             )}
                             {/* Book Now tag for TeeBox courses */}
-                            {c.provider === 'teebox' && c.provider_id && (
+                            {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[var(--color-primary-red)] text-white font-semibold text-[10px]">
                                 BOOK NOW
                               </span>
@@ -1045,7 +1036,7 @@ export default function GolfPage() {
                                     {c.city}{c.state ? `, ${c.state}` : ""}
                                   </p>
                                 </div>
-                                {c.provider === 'teebox' && c.provider_id && teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess && (
+                                {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id && teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess && (
                                   <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-50 border border-orange-200 rounded flex-shrink-0">
                                     <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1073,7 +1064,7 @@ export default function GolfPage() {
                               </div>
 
                               {/* Bottom Row: Button (for no booking) OR Tee Times/Waitlist */}
-                              {c.provider === 'teebox' && c.provider_id ? (
+                              {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id ? (
                                 /* Tee Times or Waitlist Section for Inline */
                                 <div className="mt-2 w-full">
                                   {loadingTeeTimes ? (
@@ -1456,7 +1447,7 @@ export default function GolfPage() {
                             </div>
                             
                             {/* No Tee Times Badge - Top Right */}
-                            {c.provider === 'teebox' && c.provider_id && teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess && (
+                            {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id && teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess && (
                               <div className="flex items-center gap-2 flex-shrink-0">
                                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 border border-orange-200 rounded-md">
                                   <svg className="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1497,7 +1488,7 @@ export default function GolfPage() {
                           </div>
 
                           {/* Tee Times Section - Only for TeeBox providers */}
-                          {c.provider === 'teebox' && c.provider_id && (
+                          {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id && (
                             <div className="mt-3">
                               {loadingTeeTimes ? (
                                 /* Loading State */
