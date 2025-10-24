@@ -322,6 +322,12 @@ export default function GolfPage() {
         return;
       }
 
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
       if (!workerReady) {
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
