@@ -354,20 +354,8 @@ export default function GolfPage() {
         return;
       }
 
-      if (!el.nodeType || el.nodeType !== 1 || typeof el.getBoundingClientRect !== 'function') {
-        console.log('❌ [Map Init] Element not a valid DOM element yet, retrying...', {
-          nodeType: (el as any).nodeType,
-          nodeName: (el as any).nodeName,
-          hasBoundingClientRect: typeof (el as any).getBoundingClientRect
-        });
-        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
-        return;
-      }
-
-      const elementWindow = (el as any).ownerDocument?.defaultView || window;
-      const ElementConstructor = elementWindow.HTMLElement;
-      if (!(el instanceof ElementConstructor)) {
-        console.log('❌ [Map Init] Element not from correct window context, retrying...');
+      if (!(el instanceof HTMLElement)) {
+        console.log('❌ [Map Init] Element not yet HTMLElement, retrying...', { type: typeof el, nodeType: (el as any)?.nodeType });
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
       }
@@ -409,40 +397,15 @@ export default function GolfPage() {
       
       console.log('✅ [Map Init] All checks passed, creating map...');
       mapboxgl.accessToken = token;
-
-      const initPts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
-      console.log('📍 [Map Init] Course points:', initPts.length);
-      
-      const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
-      const baseOptions: mapboxgl.MapboxOptions = {
-        container: el as HTMLElement,
-        style: "mapbox://styles/mapbox/streets-v12",
-      };
       
       console.log('🏗️ [Map Init] Creating Mapbox instance...');
       try {
-        const map = new mapboxgl.Map(
-          initPts.length > 0
-            ? {
-                ...baseOptions,
-                bounds:
-                  initPts.length === 1
-                    ? new mapboxgl.LngLatBounds(
-                        [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
-                        [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
-                      )
-                    : initPts.reduce((b, p, i) => {
-                        if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
-                        return b.extend([p.lon!, p.lat!]);
-                      }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
-                fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
-              }
-            : {
-                ...baseOptions,
-                center: state?.viewport?.center ?? [-117.1611, 32.7157],
-                zoom: state?.viewport?.zoom ?? 10,
-              }
-        );
+        const map = new mapboxgl.Map({
+          container: el,
+          style: "mapbox://styles/mapbox/streets-v12",
+          center: [-117.1611, 32.7157],
+          zoom: 10,
+        });
         console.log('✅ [Map Init] Map instance created successfully');
         mapRef.current = map;
 
@@ -481,14 +444,19 @@ export default function GolfPage() {
         mapRef.current = null;
       }
     };
-  }, [setState, token, workerReady, coursesWithAvailability, safeArea, state]);
+  }, [setState, token, workerReady]);
 
   // Add custom markers when courses change
   useEffect(() => {
     const map = mapRef.current;
+    console.log('📍 [Markers Effect] Running...', { 
+      hasMap: !!map, 
+      coursesCount: coursesWithAvailability?.length ?? 0 
+    });
     if (!map) return;
 
     const addMarkers = () => {
+      console.log('🎯 [Markers] Adding markers for', coursesWithAvailability?.length ?? 0, 'courses');
       // Remove existing markers and popups
       markersRef.current.forEach(marker => marker.remove());
       markersRef.current = [];
