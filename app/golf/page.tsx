@@ -322,7 +322,9 @@ export default function GolfPage() {
 
     let disposed = false;
     let raf = 0 as number | undefined;
+    let timeout = 0 as number | undefined;
     let attemptCount = 0;
+    let hasWaited = false;
 
     const tryInit = () => {
       attemptCount++;
@@ -334,13 +336,21 @@ export default function GolfPage() {
       }
 
       const el = mapContainer.current;
-      if (!el || !(el instanceof HTMLElement) || !el.isConnected) {
+      if (!el || !el.isConnected) {
         console.log('❌ [Map Init] Container not ready:', { 
           exists: !!el, 
-          isHTMLElement: el instanceof HTMLElement, 
           isConnected: el?.isConnected 
         });
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
+      if (!hasWaited && attemptCount < 5) {
+        console.log('⏳ [Map Init] Waiting for hydration...');
+        hasWaited = true;
+        timeout = setTimeout(() => {
+          if (!disposed) tryInit();
+        }, 100) as unknown as number;
         return;
       }
 
@@ -446,6 +456,7 @@ export default function GolfPage() {
       console.log('🧹 [Map Init] Cleanup running');
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
+      if (timeout) clearTimeout(timeout);
       if (mapRef.current) {
         console.log('🗑️ [Map Init] Removing existing map');
         mapRef.current.remove();
