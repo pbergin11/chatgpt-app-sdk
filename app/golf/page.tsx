@@ -507,12 +507,10 @@ export default function GolfPage() {
           }
         });
         
-        // Add click handler
+        // Add click handler - use onSelectCourse to trigger tee time fetch
         el.addEventListener('click', () => {
-          setState((prev) => ({ 
-            ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), 
-            selectedCourseId: course.id 
-          }));
+          console.log('🗺️ [Marker Click] Course:', course.id);
+          onSelectCourse(course.id);
         });
         
         markersRef.current.push(marker);
@@ -580,24 +578,43 @@ export default function GolfPage() {
   }, [state?.selectedCourseId, coursesWithAvailability]);
 
   const onSelectCourse = (id: string) => {
+    console.log('🎯 [onSelectCourse] CLICKED COURSE ID:', id);
+    
     // If clicking the same course, deselect it
     if (state?.selectedCourseId === id) {
+      console.log('⚠️ [onSelectCourse] Same course clicked - deselecting');
       setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: undefined }));
       setShowWaitlistForm(false);
       setWaitlistSuccess(false);
     } else {
+      console.log('✅ [onSelectCourse] New course selected:', id);
       setState((prev) => ({ ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }), selectedCourseId: id }));
       setShowWaitlistForm(false);
       setWaitlistSuccess(false);
       
       // Find the course
+      console.log('🔍 [onSelectCourse] Searching in coursesWithAvailability, total courses:', coursesWithAvailability?.length);
       const course = coursesWithAvailability.find((c: any) => c.id === id);
+      console.log('📍 [onSelectCourse] Found course:', course?.name);
       
       // If course has TeeBox provider, fetch tee times
       // Initial fetch without filters - user can apply filters after card opens
+      console.log('🔧 [onSelectCourse] Checking conditions:');
+      console.log('  - Provider:', course?.provider, '(teebox or teefox?)');
+      console.log('  - Provider ID:', course?.provider_id);
+      console.log('  - Selected Date:', selectedDate);
+      console.log('  - Has provider?', (course?.provider === 'teebox' || course?.provider === 'teefox'));
+      console.log('  - Has provider_id?', !!course?.provider_id);
+      console.log('  - Has selectedDate?', !!selectedDate);
+      
       if ((course?.provider === 'teebox' || course?.provider === 'teefox') && course?.provider_id && selectedDate) {
         const dateStr = selectedDate.toISOString().split('T')[0];
+        console.log('🚀 [onSelectCourse] INITIATING TEE TIME SEARCH');
+        console.log('  - Location ID:', course.provider_id);
+        console.log('  - Date:', dateStr);
         fetchTeeTimes(course.provider_id, dateStr);
+      } else {
+        console.log('❌ [onSelectCourse] NOT fetching tee times - condition failed');
       }
       
       // Fetch details via MCP
@@ -1108,12 +1125,12 @@ export default function GolfPage() {
                               {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id ? (
                                 /* Tee Times or Waitlist Section for Inline */
                                 <div className="mt-2 w-full">
-                                  {loadingTeeTimes ? (
+                                  {(loadingTeeTimes || !teeTimesData) ? (
                                     <div className="flex items-center justify-center py-2 gap-2">
                                       <BlocksWaveIcon size={16} color="var(--color-primary-red)" />
                                       <p className="text-[10px] text-[var(--color-ink-gray)]">Loading...</p>
                                     </div>
-                                  ) : teeTimesData?.teetimes && teeTimesData.teetimes.length > 0 ? (
+                                  ) : teeTimesData.teetimes && teeTimesData.teetimes.length > 0 ? (
                                     /* Inline Tee Times - Compact */
                                     <div className="space-y-1">
                                       {/* Date selector and filters - compact */}
@@ -1301,7 +1318,7 @@ export default function GolfPage() {
                                         </div>
                                       </div>
                                     </div>
-                                  ) : teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess ? (
+                                  ) : teeTimesData.teetimes && teeTimesData.teetimes.length === 0 && !waitlistSuccess ? (
                                     /* Inline Waitlist - Compact */
                                     <div className="space-y-1.5">
                                       {/* Date selector - darker text */}
@@ -1539,7 +1556,7 @@ export default function GolfPage() {
                           {/* Tee Times Section - Only for TeeBox providers */}
                           {(c.provider === 'teebox' || c.provider === 'teefox') && c.provider_id && (
                             <div className="mt-3">
-                              {loadingTeeTimes ? (
+                              {(loadingTeeTimes || !teeTimesData) ? (
                                 /* Loading State */
                                 <div className="flex flex-col items-center justify-center py-6 gap-3">
                                   <BlocksWaveIcon size={32} color="var(--color-primary-red)" />
@@ -1552,7 +1569,7 @@ export default function GolfPage() {
                                 <div className="text-xs text-red-600 py-2">
                                   Unable to load tee times
                                 </div>
-                              ) : teeTimesData?.teetimes && teeTimesData.teetimes.length > 0 ? (
+                              ) : teeTimesData.teetimes && teeTimesData.teetimes.length > 0 ? (
                                 /* Tee Times Display */
                                 <>
                                   {/* Filter Bar with Date Navigation */}
@@ -1742,7 +1759,7 @@ export default function GolfPage() {
                                     })}
                                   </div>
                                 </>
-                              ) : teeTimesData?.teetimes && teeTimesData.teetimes.length === 0 ? (
+                              ) : teeTimesData.teetimes && teeTimesData.teetimes.length === 0 ? (
                                 /* No Tee Times Available - Show Date Selector + Message + Waitlist Form */
                                 waitlistSuccess ? (
                                   /* Success Message */

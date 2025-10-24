@@ -18,9 +18,16 @@ export function useTeeTimes() {
       holes?: number;
     }
   ) => {
+    console.log('🔥 [useTeeTimes] fetchTeeTimes CALLED');
+    console.log('  - locationId:', locationId);
+    console.log('  - date:', date);
+    console.log('  - options:', options);
+    
     setLoading(true);
     setError(null);
     setData(null);
+    
+    console.log('⏳ [useTeeTimes] State updated: loading=true, data=null');
 
     try {
       const params = new URLSearchParams({
@@ -36,12 +43,17 @@ export function useTeeTimes() {
         params.append('holes', `[${options.holes}]`);
       }
       
-      const response = await fetch(`/api/teefox?${params.toString()}`, {
+      const url = `/api/teefox?${params.toString()}`;
+      console.log('📡 [useTeeTimes] Fetching:', url);
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('📥 [useTeeTimes] Response status:', response.status);
 
       if (!response.ok) {
         let errorData;
@@ -54,9 +66,11 @@ export function useTeeTimes() {
       }
 
       const result: TeeFoxResponse = await response.json();
+      console.log('✅ [useTeeTimes] Success! Tee times found:', result.teetimes?.length || 0);
       setData(result);
       return result;
     } catch (err) {
+      console.error('❌ [useTeeTimes] Error occurred:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
       console.error('[useTeeTimes] Error fetching tee times:', {
@@ -80,6 +94,7 @@ export function useTeeTimes() {
       setData(emptyResult);
       return emptyResult;
     } finally {
+      console.log('🏁 [useTeeTimes] Finally block: setting loading=false');
       setLoading(false);
     }
   }, []);
