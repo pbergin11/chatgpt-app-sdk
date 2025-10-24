@@ -354,6 +354,16 @@ export default function GolfPage() {
         return;
       }
 
+      if (!(el instanceof HTMLElement)) {
+        console.log('❌ [Map Init] Element not HTMLElement yet, retrying...', {
+          nodeType: (el as any).nodeType,
+          nodeName: (el as any).nodeName,
+          constructor: (el as any).constructor?.name
+        });
+        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
       const rect = el.getBoundingClientRect();
       console.log('📐 [Map Init] Container dimensions:', { 
         width: rect.width, 
