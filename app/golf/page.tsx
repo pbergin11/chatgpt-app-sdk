@@ -308,96 +308,151 @@ export default function GolfPage() {
   }, [userAgent, displayMode]);
 
   useEffect(() => {
-    if (mapRef.current) return;
+    console.log('🗺️ [Map Init Effect] Starting...', {
+      hasToken: !!token,
+      workerReady,
+      coursesCount: coursesWithAvailability?.length ?? 0,
+      hasSafeArea: !!safeArea,
+      hasState: !!state
+    });
+    if (mapRef.current) {
+      console.log('⚠️ [Map Init Effect] Map already exists, skipping');
+      return;
+    }
 
     let disposed = false;
     let raf = 0 as number | undefined;
+    let attemptCount = 0;
 
     const tryInit = () => {
-      if (disposed || mapRef.current) return;
+      attemptCount++;
+      console.log(`🔄 [Map Init] Attempt #${attemptCount}`);
+      
+      if (disposed || mapRef.current) {
+        console.log('⚠️ [Map Init] Disposed or map exists, stopping');
+        return;
+      }
 
       const el = mapContainer.current;
       if (!el || !(el instanceof HTMLElement) || !el.isConnected) {
+        console.log('❌ [Map Init] Container not ready:', { 
+          exists: !!el, 
+          isHTMLElement: el instanceof HTMLElement, 
+          isConnected: el?.isConnected 
+        });
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
       }
 
       const rect = el.getBoundingClientRect();
+      console.log('📐 [Map Init] Container dimensions:', { 
+        width: rect.width, 
+        height: rect.height,
+        top: rect.top,
+        left: rect.left
+      });
+      
       if (rect.width === 0 || rect.height === 0) {
+        console.log('❌ [Map Init] Container has zero dimensions, retrying...');
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
       }
 
       if (!workerReady) {
+        console.log('❌ [Map Init] Worker not ready, retrying...');
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
       }
 
       if (!token) {
+        console.log('❌ [Map Init] No Mapbox token');
         setNoToken(true);
         return;
       }
-      if (!mapboxgl.supported({ failIfMajorPerformanceCaveat: false })) {
+      
+      const supported = mapboxgl.supported({ failIfMajorPerformanceCaveat: false });
+      console.log('🔍 [Map Init] WebGL supported:', supported);
+      
+      if (!supported) {
+        console.log('❌ [Map Init] WebGL not supported, using fallback');
         setNoWebGL(true);
         return;
       }
+      
+      console.log('✅ [Map Init] All checks passed, creating map...');
       mapboxgl.accessToken = token;
 
       const initPts = (coursesWithAvailability ?? []).filter(c => typeof c.lon === 'number' && typeof c.lat === 'number');
+      console.log('📍 [Map Init] Course points:', initPts.length);
+      
       const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
       const baseOptions: mapboxgl.MapboxOptions = {
         container: el,
         style: "mapbox://styles/mapbox/streets-v12",
       };
-      const map = new mapboxgl.Map(
-        initPts.length > 0
-          ? {
-              ...baseOptions,
-              bounds:
-                initPts.length === 1
-                  ? new mapboxgl.LngLatBounds(
-                      [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
-                      [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
-                    )
-                  : initPts.reduce((b, p, i) => {
-                      if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
-                      return b.extend([p.lon!, p.lat!]);
-                    }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
-              fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
-            }
-          : {
-              ...baseOptions,
-              center: state?.viewport?.center ?? [-117.1611, 32.7157],
-              zoom: state?.viewport?.zoom ?? 10,
-            }
-      );
-      mapRef.current = map;
+      
+      console.log('🏗️ [Map Init] Creating Mapbox instance...');
+      try {
+        const map = new mapboxgl.Map(
+          initPts.length > 0
+            ? {
+                ...baseOptions,
+                bounds:
+                  initPts.length === 1
+                    ? new mapboxgl.LngLatBounds(
+                        [initPts[0].lon! - 0.01, initPts[0].lat! - 0.01],
+                        [initPts[0].lon! + 0.01, initPts[0].lat! + 0.01]
+                      )
+                    : initPts.reduce((b, p, i) => {
+                        if (i === 0) return new mapboxgl.LngLatBounds([p.lon!, p.lat!], [p.lon!, p.lat!]);
+                        return b.extend([p.lon!, p.lat!]);
+                      }, new mapboxgl.LngLatBounds([initPts[0].lon!, initPts[0].lat!], [initPts[0].lon!, initPts[0].lat!])),
+                fitBoundsOptions: { padding: { top: 40, right: 40, bottom: bottomPad, left: 40 }, maxZoom: 13 },
+              }
+            : {
+                ...baseOptions,
+                center: state?.viewport?.center ?? [-117.1611, 32.7157],
+                zoom: state?.viewport?.zoom ?? 10,
+              }
+        );
+        console.log('✅ [Map Init] Map instance created successfully');
+        mapRef.current = map;
 
-      map.on("moveend", () => {
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        setState((prev) => ({
-          ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }),
-          viewport: { center: [center.lng, center.lat], zoom },
-        }));
-      });
+        map.on("moveend", () => {
+          const center = map.getCenter();
+          const zoom = map.getZoom();
+          setState((prev) => ({
+            ...(prev ?? { __v: 1, viewport: { center: [-117.1611, 32.7157], zoom: 10 } }),
+            viewport: { center: [center.lng, center.lat], zoom },
+          }));
+        });
 
-      map.on("load", () => {
-        map.resize();
-      });
+        map.on("load", () => {
+          console.log('🎉 [Map Init] Map loaded and ready');
+          map.resize();
+        });
+        
+        map.on("error", (e) => {
+          console.error('❌ [Map Init] Map error:', e);
+        });
+      } catch (error) {
+        console.error('❌ [Map Init] Failed to create map:', error);
+      }
     };
 
     tryInit();
 
     return () => {
+      console.log('🧹 [Map Init] Cleanup running');
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       if (mapRef.current) {
+        console.log('🗑️ [Map Init] Removing existing map');
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, [setState, token, workerReady]);
+  }, [setState, token, workerReady, coursesWithAvailability, safeArea, state]);
 
   // Add custom markers when courses change
   useEffect(() => {
