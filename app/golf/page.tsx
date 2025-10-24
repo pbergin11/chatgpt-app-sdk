@@ -364,6 +364,14 @@ export default function GolfPage() {
         return;
       }
 
+      const elementWindow = (el as any).ownerDocument?.defaultView || window;
+      const ElementConstructor = elementWindow.HTMLElement;
+      if (!(el instanceof ElementConstructor)) {
+        console.log('❌ [Map Init] Element not from correct window context, retrying...');
+        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
+        return;
+      }
+
       const rect = el.getBoundingClientRect();
       console.log('📐 [Map Init] Container dimensions:', { 
         width: rect.width, 
