@@ -335,7 +335,7 @@ export default function GolfPage() {
         return;
       }
 
-      const el = mapContainer.current;
+      const el = (document.getElementById("golf-map") as HTMLElement | null) ?? mapContainer.current;
       if (!el || !el.isConnected) {
         console.log('❌ [Map Init] Container not ready:', { 
           exists: !!el, 
@@ -351,12 +351,6 @@ export default function GolfPage() {
         timeout = setTimeout(() => {
           if (!disposed) tryInit();
         }, 100) as unknown as number;
-        return;
-      }
-
-      if (!(el instanceof HTMLElement)) {
-        console.log('❌ [Map Init] Element not yet HTMLElement, retrying...', { type: typeof el, nodeType: (el as any)?.nodeType });
-        raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
       }
 
@@ -398,10 +392,10 @@ export default function GolfPage() {
       console.log('✅ [Map Init] All checks passed, creating map...');
       mapboxgl.accessToken = token;
       
-      console.log('🏗️ [Map Init] Creating Mapbox instance...');
+      console.log('🏗️ [Map Init] Creating Mapbox instance with container id "golf-map"...');
       try {
         const map = new mapboxgl.Map({
-          container: el,
+          container: 'golf-map',
           style: "mapbox://styles/mapbox/streets-v12",
           center: [-117.1611, 32.7157],
           zoom: 10,
@@ -764,7 +758,7 @@ export default function GolfPage() {
         ) : noWebGL ? (
           <StaticMapFallback token={token} center={state?.viewport?.center ?? [-117.1611, 32.7157]} zoom={state?.viewport?.zoom ?? 10} />
         ) : (
-          <div ref={mapContainer} className="h-full w-full" />
+          <div id="golf-map" ref={mapContainer} className="h-full w-full" />
         )}
       </div>
 
