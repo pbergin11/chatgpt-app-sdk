@@ -354,11 +354,11 @@ export default function GolfPage() {
         return;
       }
 
-      if (!(el instanceof HTMLElement)) {
-        console.log('❌ [Map Init] Element not HTMLElement yet, retrying...', {
+      if (!el.nodeType || el.nodeType !== 1 || typeof el.getBoundingClientRect !== 'function') {
+        console.log('❌ [Map Init] Element not a valid DOM element yet, retrying...', {
           nodeType: (el as any).nodeType,
           nodeName: (el as any).nodeName,
-          constructor: (el as any).constructor?.name
+          hasBoundingClientRect: typeof (el as any).getBoundingClientRect
         });
         raf = requestAnimationFrame(tryInit as FrameRequestCallback);
         return;
@@ -407,7 +407,7 @@ export default function GolfPage() {
       
       const bottomPad = (safeArea?.insets?.bottom ?? 0) + 180;
       const baseOptions: mapboxgl.MapboxOptions = {
-        container: el,
+        container: el as HTMLElement,
         style: "mapbox://styles/mapbox/streets-v12",
       };
       
