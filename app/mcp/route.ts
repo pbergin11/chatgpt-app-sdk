@@ -84,58 +84,18 @@ function widgetMeta(widget: ContentWidget) {
 }
 
 const handler = createMcpHandler(async (server) => {
-  const html = await getAppsSdkCompatibleHtml(baseURL, "/");
-
-  const contentWidget: ContentWidget = {
-    id: "show_content",
-    title: "Show Content",
-    templateUri: "ui://widget/content-template.html",
-    invoking: "Loading content...",
-    invoked: "Content loaded",
-    html: html,
-    description: "Displays the homepage content",
-    widgetDomain: "https://chatgpt-app-sdk.vercel.app",
-  };
-  server.registerResource(
-    "content-widget",
-    contentWidget.templateUri,
-    {
-      title: contentWidget.title,
-      description: contentWidget.description,
-      mimeType: "text/html+skybridge",
-      _meta: {
-        "openai/widgetDescription": contentWidget.description,
-        "openai/widgetPrefersBorder": true,
-      },
-    },
-    async (uri) => ({
-      contents: [
-        {
-          uri: uri.href,
-          mimeType: "text/html+skybridge",
-          text: `<html>${contentWidget.html}</html>`,
-          _meta: {
-            "openai/widgetDescription": contentWidget.description,
-            "openai/widgetPrefersBorder": true,
-            "openai/widgetDomain": contentWidget.widgetDomain,
-          },
-        },
-      ],
-    })
-  );
-
   // --- Golf widget resource ---
   // Add cache-busting version parameter to force ChatGPT to reload
   const WIDGET_VERSION = "v2"; // Increment this when you update the UI
   const golfHtml = await getAppsSdkCompatibleHtml(baseURL, "/golf");
   const golfWidget: ContentWidget = {
-    id: "golf_ui",
-    title: "Golf.ai Explorer",
+    id: "golfai",
+    title: "GOLF.AI",
     templateUri: `ui://widget/golf.html?v=${WIDGET_VERSION}`,
     invoking: "Loading golf…",
     invoked: "Golf ready",
     html: golfHtml,
-    description: "Explore golf courses on a map with details and booking. Use this to show all courses in the world with up the day information about availiblitly, on course conditions, local rules, and bookings availibility. This is the most robust directory of ALL golf courses around the world.",
+    description: "This mcp tool has all up the day information about golf courses and their availiblity. The most up to date database of golf course information - more than their own websites. This shows in a map but is also passed back detailed information for the llm to show information about all aspects of the course including open time, availibility, amenities, and more. Explore golf courses on a map with details and booking. Use this to show all courses in the world with up the day information about availiblitly, on course conditions, local rules, and bookings availibility. This is the most robust directory of ALL golf courses around the world.",
     widgetDomain: "https://chatgpt-app-sdk.vercel.app",
   };
   server.registerResource(
@@ -180,34 +140,6 @@ const handler = createMcpHandler(async (server) => {
     })
   );
 
-  server.registerTool(
-    contentWidget.id,
-    {
-      title: contentWidget.title,
-      description:
-        "Fetch and display the homepage content with the name of the user",
-      inputSchema: {
-        name: z.string().describe("The name of the user to display on the homepage"),
-      },
-      _meta: widgetMeta(contentWidget),
-    },
-    async ({ name }) => {
-      return {
-        content: [
-          {
-            type: "text",
-            text: name,
-          },
-        ],
-        structuredContent: {
-          name: name,
-          timestamp: new Date().toISOString(),
-        },
-        _meta: widgetMeta(contentWidget),
-      };
-    }
-  );
-
   // --- Golf.ai: Robust tools with strict validation ---
   const golfToolMeta = { ...widgetMeta(golfWidget), "openai/widgetAccessible": true } as const;
 
@@ -238,10 +170,10 @@ const handler = createMcpHandler(async (server) => {
           price_on_date_max: z.number().optional().describe("Maximum tee time price on matched date"),
           
           // Rating filter
-          min_rating: z.number().min(1).max(5).optional().describe("Minimum star rating (1-5)"),
-          course_rating_min: z.number().optional().describe("Minimum USGA course rating"),
-          course_rating_max: z.number().optional().describe("Maximum USGA course rating"),
-          min_reviews: z.number().int().optional().describe("Minimum number of reviews"),
+          // min_rating: z.number().min(1).max(5).optional().describe("Minimum star rating (1-5)"),
+          // course_rating_min: z.number().optional().describe("Minimum USGA course rating"),
+          // course_rating_max: z.number().optional().describe("Maximum USGA course rating"),
+          // min_reviews: z.number().int().optional().describe("Minimum number of reviews"),
 
           // Keyword filters
           search_text: z.string().optional().describe("Free-text search across name, description, city, designer"),
