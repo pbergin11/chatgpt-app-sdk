@@ -85,7 +85,10 @@ export default function GolfPage() {
   
   // Local display mode override for localhost testing
   const [localDisplayMode, setLocalDisplayMode] = useState<'inline' | 'fullscreen'>('inline');
-  const displayMode = hasOpenAI ? displayModeFromSDK : localDisplayMode;
+  // Filter displayMode to only 'inline' or 'fullscreen' (exclude 'pip' mode)
+  const displayMode: 'inline' | 'fullscreen' = hasOpenAI 
+    ? (displayModeFromSDK === 'fullscreen' ? 'fullscreen' : 'inline')
+    : localDisplayMode;
   
   // Cap maxHeight at 750px for inline mode (both mobile and desktop) to prevent infinite growth
   const maxHeight = useMemo(() => {
