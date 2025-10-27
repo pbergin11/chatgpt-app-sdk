@@ -9,6 +9,7 @@ The close button had multiple issues:
 2. **Semi-transparent background** (`bg-white/90`) - allowed text to show through
 3. **No shadow** - didn't visually separate from content behind it
 4. **Layout conflict** - "No Tee Times" badge was in the same row, competing for space in the top-right corner
+5. **Missing relative positioning** - CourseCard wrapper didn't have `relative`, causing button to position relative to wrong parent (especially in ChatGPT iframe)
 
 ## Solution
 Updated the close button styling and layout:
@@ -17,10 +18,23 @@ Updated the close button styling and layout:
 3. **Shadow**: `shadow-md hover:shadow-lg` - creates visual separation
 4. **Layout restructure**: Moved "No Tee Times" badge to its own row below the course name
 5. **Reserved space**: Added `pr-7` padding to content area to prevent text from reaching close button
+6. **Fixed positioning context**: Added `relative` to CourseCard wrapper so button positions correctly
 
 ## Code Changes
 
-### File 1: `app/golf/components/cards/ExpandedCardInline.tsx`
+### File 1: `app/golf/components/cards/CourseCard.tsx` (line 68)
+
+```tsx
+// Before
+className={`bg-white rounded-[16px] shadow-[var(--shadow-card)] transition-all duration-200 flex-shrink-0 ${
+
+// After
+className={`relative bg-white rounded-[16px] shadow-[var(--shadow-card)] transition-all duration-200 flex-shrink-0 ${
+```
+
+**Critical:** This ensures the close button positions relative to the card, not the viewport. Without this, the button appears on the far right of the screen in ChatGPT's iframe.
+
+### File 2: `app/golf/components/cards/ExpandedCardInline.tsx`
 
 **Change 1: Container padding (line 85)**
 ```tsx
@@ -82,7 +96,7 @@ Updated the close button styling and layout:
 )}
 ```
 
-### File 2: `app/golf/components/cards/ExpandedCardFullscreen.tsx` (lines 89-101)
+### File 3: `app/golf/components/cards/ExpandedCardFullscreen.tsx` (lines 89-101)
 
 ```tsx
 // Before

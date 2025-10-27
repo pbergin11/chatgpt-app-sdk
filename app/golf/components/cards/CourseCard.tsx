@@ -65,7 +65,7 @@ export function CourseCard({
   return (
     <div
       ref={cardRef as any}
-      className={`bg-white rounded-[16px] shadow-[var(--shadow-card)] transition-all duration-200 flex-shrink-0 ${
+      className={`relative bg-white rounded-[16px] shadow-[var(--shadow-card)] transition-all duration-200 flex-shrink-0 ${
         isSelected 
           ? "" 
           : "cursor-pointer hover:shadow-lg"
